@@ -51,16 +51,27 @@ export function hasRussianVoice() {
  */
 export function speak(text, { slow = false } = {}) {
   if (typeof window === 'undefined' || !window.speechSynthesis || !text) return;
-  window.speechSynthesis.cancel();
   if (!voicesLoaded) refreshVoiceCache();
 
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = 'ru-RU';
   utterance.rate = slow ? 0.6 : 1;
   if (cachedVoice) utterance.voice = cachedVoice;
-  utterance.onerror = (event) => {
-    // eslint-disable-next-line no-console -- utile pour diagnostiquer un appareil muet
-    console.warn('Synthèse vocale : échec de la lecture', event.error);
-  };
-  window.speechSynthesis.speak(utterance);
+  // eslint-disable-next-line no-console -- utile pour diagnostiquer un appareil muet
+  utterance.onerror = (event) => console.warn('Synthèse vocale : échec de la lecture', event.error);
+
+  const synth = window.speechSynthesis;
+  const startSpeaking = () => synth.speak(utterance);
+
+  // Bug connu de Chrome/Safari (desktop et mobile) : enchaîner cancel() puis speak() dans
+  // le même tick peut faire disparaître l'utterance en silence, surtout si le moteur
+  // n'était pas déjà en train de parler (le cancel() est asynchrone en coulisses). On
+  // n'annule donc que s'il y a réellement quelque chose en cours, avec un court délai
+  // avant de reparler pour laisser l'annulation se terminer.
+  if (synth.speaking || synth.pending) {
+    synth.cancel();
+    setTimeout(startSpeaking, 50);
+  } else {
+    startSpeaking();
+  }
 }
