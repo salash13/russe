@@ -21,10 +21,17 @@ export async function loadContent() {
 
   // Une carte "letter:<id>:son" ou "letter:<id>:lettre" ne peut être présentée que si la
   // lettre existe encore dans le contenu chargé (§4.3 : toute carte planifiée doit pouvoir
-  // être présentée).
+  // être présentée). La facette "lettre" (entendre le son, deviner la lettre) n'a pas de
+  // sens pour Ь/Ъ, qui n'ont aucun son propre ("(muet)") : forcer la synthèse vocale à lire
+  // le caractère seul produit un charabia sans rapport avec la lettre.
   registerCardType('letter', {
     facets: ['son', 'lettre'],
-    canPresent: (parsed) => lettersById.has(parsed.elementId),
+    canPresent: (parsed) => {
+      const letter = lettersById.get(parsed.elementId);
+      if (!letter) return false;
+      if (parsed.facet === 'lettre' && letter.sound === '(muet)') return false;
+      return true;
+    },
   });
 
   return cache;

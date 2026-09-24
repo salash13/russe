@@ -23,10 +23,18 @@ function shuffle(array) {
   return copy;
 }
 
+// Ь et Ъ ne se prononcent jamais seuls (§3.2, "son": "(muet)") : leur faire deviner "quelle
+// lettre fait ce son" n'a pas de sens, et forcer la synthèse vocale à lire le caractère seul
+// produit un charabia sans rapport (constaté en direct). On garde uniquement l'exercice
+// "lettre → son" pour elles, où la bonne réponse est justement "(muet)".
+function hasAudibleSound(letter) {
+  return letter.sound !== '(muet)';
+}
+
 export function startPlacement(app) {
   const items = [];
   for (const letter of app.content.letters) {
-    items.push({ letterId: letter.id, facet: 'lettre' });
+    if (hasAudibleSound(letter)) items.push({ letterId: letter.id, facet: 'lettre' });
     items.push({ letterId: letter.id, facet: 'son' });
   }
   app.runtime.placement = { items: shuffle(items), index: 0, results: new Map() };
@@ -69,8 +77,10 @@ function finishPlacement(app) {
 
   for (const letter of app.content.letters) {
     const result = p.results.get(letter.id) ?? {};
-    const known = result.son === true && result.lettre === true;
-    for (const facet of ['son', 'lettre']) {
+    const audible = hasAudibleSound(letter);
+    const known = audible ? result.son === true && result.lettre === true : result.son === true;
+    const facets = audible ? ['son', 'lettre'] : ['son'];
+    for (const facet of facets) {
       const id = makeCardId('letter', letter.id, facet);
       if (known) {
         const card = createCard(RATING.GOOD);
