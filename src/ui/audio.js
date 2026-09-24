@@ -5,25 +5,24 @@
 // doit jamais servir de référence pour la place de l'accent tonique — seulement pour le
 // son général d'une lettre ou d'un mot.
 //
-// Piège connu sur Chrome/Android : la liste des voix arrive parfois de façon asynchrone
-// (évènement "voiceschanged"), après le chargement de la page.
+// Deux pièges rencontrés et corrigés en diagnostiquant en direct avec Ben (24/09/2026) :
 //
-// Piège connu sur Safari/WebKit, plus tenace : getVoices() peut renvoyer un tableau vide
-// pendant plusieurs secondes après le chargement, sans que "voiceschanged" se déclenche de
-// façon fiable pour autant — alors même que la voix existe au niveau du système (confirmé
-// ici : `say -v Milena` fonctionne, mais speechSynthesis.getVoices() reste vide un bon
-// moment). On retente donc activement getVoices() à intervalles courts pendant quelques
-// secondes au démarrage (primeVoices()), sans jamais bloquer un appel à speak() déclenché
-// par un tapotement (un blocage casserait le geste utilisateur exigé par certains
-// navigateurs pour autoriser le son).
+// 1. Chrome propose souvent DEUX voix russes : une locale (ex. "Milena", `localService:
+//    true`, fonctionne hors ligne) et une "en ligne" (ex. "Google русский", `localService:
+//    false`, passe par un serveur Google). Laisser le navigateur choisir seul via `lang`
+//    peut sélectionner la voix en ligne, qui échoue en silence si ce service n'est pas
+//    joignable. On sélectionne donc toujours explicitement une voix locale quand il y en a
+//    une.
 //
-// Piège trouvé en diagnostiquant avec Ben : Chrome propose souvent DEUX voix russes — une
-// locale (ex. "Milena", `localService: true`, fonctionne hors ligne) et une "en ligne" (ex.
-// "Google русский", `localService: false`, passe par un serveur Google). Si on laisse Chrome
-// choisir seul via `lang` uniquement, il peut prendre la voix en ligne ; si ce service est
-// inaccessible (réseau, blocage), la lecture échoue en silence, sans erreur exploitable,
-// même si la voix locale fonctionne très bien par ailleurs. On choisit donc toujours
-// explicitement une voix locale quand il y en a une.
+// 2. Sur certains navigateurs (notamment Safari/WebKit), getVoices() peut renvoyer un
+//    tableau vide pendant plusieurs secondes après le chargement, sans que "voiceschanged"
+//    se déclenche de façon fiable. On retente donc activement getVoices() à intervalles
+//    courts pendant quelques secondes au démarrage (primeVoices()).
+//
+// (Un Chrome install sur un Mac particulier s'est aussi révélé avoir sa propre implémentation
+// de speechSynthesis durablement cassée — aucun son, dans aucune configuration, alors que
+// Firefox et la commande `say` du système fonctionnaient très bien. Rien à corriger côté
+// code dans ce cas : c'est à l'utilisateur de changer de navigateur.)
 
 let cachedVoice = null;
 let voicesLoaded = false;
@@ -73,14 +72,15 @@ export function speak(text, { slow = false } = {}) {
   if (typeof window === 'undefined' || !window.speechSynthesis || !text) return;
   if (!voicesLoaded) refreshVoiceCache();
 
+  // Annule toute lecture en cours ou en attente avant de parler : sans ça, les lectures
+  // s'empilent dans la file du navigateur, et si l'utilisateur avance plus vite que la
+  // voix ne parle, on peut entendre une ancienne question pendant que l'écran en affiche
+  // déjà une nouvelle (une seule chose à la fois doit être audible).
+  window.speechSynthesis.cancel();
+
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = 'ru-RU';
   utterance.rate = slow ? 0.6 : 1;
-  // On assigne la voix locale explicitement (voir la note en tête de fichier) : sans ça,
-  // Chrome peut choisir tout seul une voix "en ligne" qui échoue en silence si son service
-  // n'est pas joignable. Pas de cancel() avant de parler (voir commit précédent) : empiler
-  // dans la file de Chrome plutôt qu'interrompre est un compromis très acceptable pour de
-  // courts mots isolés.
   if (cachedVoice) utterance.voice = cachedVoice;
   // eslint-disable-next-line no-console -- utile pour diagnostiquer un appareil muet
   utterance.onerror = (event) => console.warn('Synthèse vocale : échec de la lecture', event.error);
