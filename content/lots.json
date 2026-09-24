@@ -1,0 +1,33 @@
+[
+  {
+    "id": 1,
+    "title": "Lettres familières",
+    "description": "Même forme et même son qu'en français : le point de départ le plus rassurant.",
+    "letters": ["a", "k", "m", "o", "t"]
+  },
+  {
+    "id": 2,
+    "title": "Faux-amis visuels",
+    "description": "Des lettres latines qu'on croit reconnaître, mais qui se prononcent autrement. Lot prioritaire : c'est là que se cachent les pièges les plus tenaces.",
+    "priority": true,
+    "letters": ["v", "e", "n", "r", "s", "u", "kh"]
+  },
+  {
+    "id": 3,
+    "title": "Lettres nouvelles mais faciles",
+    "description": "Des formes inédites, mais des sons simples à retenir.",
+    "letters": ["b", "g", "d", "z", "i", "l", "p", "f", "erev"]
+  },
+  {
+    "id": 4,
+    "title": "Lettres nouvelles difficiles",
+    "description": "Formes et sons les moins évidents pour un francophone : à prendre son temps.",
+    "letters": ["zh", "ts", "ch", "sh", "shch", "y", "icourt", "yu", "ya", "yo"]
+  },
+  {
+    "id": 5,
+    "title": "Les signes",
+    "description": "Ne se prononcent jamais seuls : ils modifient la consonne qui précède.",
+    "letters": ["signemou", "signedur"]
+  }
+]

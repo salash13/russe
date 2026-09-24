@@ -5,6 +5,7 @@
   "description": "Apprendre le russe (français → russe) — HTML/CSS/JS vanilla, zéro build, zéro dépendance.",
   "scripts": {
     "test": "node --test",
+    "validate": "node scripts/validate-content.mjs",
     "serve": "node scripts/serve.mjs"
   }
 }
