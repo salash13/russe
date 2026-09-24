@@ -67,25 +67,14 @@ export function speak(text, { slow = false } = {}) {
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = 'ru-RU';
   utterance.rate = slow ? 0.6 : 1;
-  // Assigner explicitement utterance.voice à un objet SpeechSynthesisVoice mis en cache est
-  // un bug connu de Chrome : ça peut faire échouer la lecture en silence (confirmé ici même
-  // : la même phrase fonctionne quand on laisse Chrome choisir via `lang` seul, et échoue
-  // quand on force `voice`). On laisse donc le navigateur choisir la voix à partir de `lang`.
+  // Ni utterance.voice, ni cancel() avant de parler : les deux se sont révélés capables de
+  // faire échouer la lecture en silence sur Chrome (confirmé en direct — l'ajout de cancel()
+  // a produit l'erreur "canceled" au lieu de corriger quoi que ce soit). Le seul schéma
+  // vérifié comme fonctionnant est le plus simple : construire l'utterance avec `lang`
+  // seulement, et appeler speak() directement. Si un son précédent est encore en cours,
+  // Chrome met simplement celui-ci à la suite dans sa file, ce qui est un compromis très
+  // acceptable pour de courts mots isolés.
   // eslint-disable-next-line no-console -- utile pour diagnostiquer un appareil muet
   utterance.onerror = (event) => console.warn('Synthèse vocale : échec de la lecture', event.error);
-
-  const synth = window.speechSynthesis;
-  const startSpeaking = () => synth.speak(utterance);
-
-  // Bug connu de Chrome/Safari (desktop et mobile) : enchaîner cancel() puis speak() dans
-  // le même tick peut faire disparaître l'utterance en silence, surtout si le moteur
-  // n'était pas déjà en train de parler (le cancel() est asynchrone en coulisses). On
-  // n'annule donc que s'il y a réellement quelque chose en cours, avec un court délai
-  // avant de reparler pour laisser l'annulation se terminer.
-  if (synth.speaking || synth.pending) {
-    synth.cancel();
-    setTimeout(startSpeaking, 50);
-  } else {
-    startSpeaking();
-  }
+  window.speechSynthesis.speak(utterance);
 }
