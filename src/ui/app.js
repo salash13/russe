@@ -1,0 +1,114 @@
+// src/ui/app.js
+//
+// Point d'entrée de l'interface (§6.1) : charge la progression et le contenu, affiche
+// l'écran courant, et centralise les interactions via un seul gestionnaire d'événements
+// lisant l'attribut data-act (repris du thaï, §11 — « à reprendre »), plutôt que d'attacher
+// un écouteur par bouton.
+
+import { createStorage } from '../core/storage.js';
+import { loadContent } from './content.js';
+import { renderHome } from './screens/home.js';
+import { startPlacement, onPlacementAnswer } from './screens/placementTest.js';
+import {
+  startSession,
+  onSessionAnswer,
+  onSessionRate,
+  onSessionReveal,
+  replayCurrentAudio,
+} from './screens/sessionScreen.js';
+
+const backend = {
+  getItem: (key) => localStorage.getItem(key),
+  setItem: (key, value) => localStorage.setItem(key, value),
+};
+
+const app = {
+  storage: createStorage(backend),
+  progress: null,
+  content: null,
+  runtime: {},
+};
+
+function renderCorrupted() {
+  document.getElementById('app').innerHTML = `
+    <section class="screen screen-error">
+      <h1>Progression illisible</h1>
+      <p>La sauvegarde enregistrée sur cet appareil n'a pas pu être lue. Rien n'a été
+        effacé : tu peux l'exporter telle quelle avant de continuer.</p>
+      <button type="button" class="btn-primary" data-act="export-corrupted">Exporter telle quelle</button>
+    </section>
+  `;
+}
+
+function exportCorrupted() {
+  const raw = app.progress.raw ?? '';
+  const blob = new Blob([raw], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `russe-sauvegarde-illisible-${Date.now()}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+async function boot() {
+  app.progress = app.storage.load();
+  if (app.progress.corrupted) {
+    renderCorrupted();
+    return;
+  }
+  app.content = await loadContent();
+  renderHome(app);
+}
+
+document.addEventListener('click', (event) => {
+  const el = event.target.closest('[data-act]');
+  if (!el) return;
+  const act = el.dataset.act;
+  switch (act) {
+    case 'start-placement':
+      startPlacement(app);
+      break;
+    case 'placement-answer':
+      onPlacementAnswer(app, el.dataset.choice);
+      break;
+    case 'start-session':
+      startSession(app);
+      break;
+    case 'answer':
+      onSessionAnswer(app, el.dataset.choice);
+      break;
+    case 'rate':
+      onSessionRate(app, Number(el.dataset.rating));
+      break;
+    case 'reveal':
+      onSessionReveal(app);
+      break;
+    case 'play-audio':
+      replayCurrentAudio(app);
+      break;
+    case 'go-home':
+      renderHome(app);
+      break;
+    case 'export-corrupted':
+      exportCorrupted();
+      break;
+    default:
+      break;
+  }
+});
+
+// Clavier (§4.5) : 1-4 pour choisir, Espace pour rejouer l'audio.
+document.addEventListener('keydown', (event) => {
+  if (['1', '2', '3', '4'].includes(event.key)) {
+    document.querySelector(`[data-key="${event.key}"]`)?.click();
+  } else if (event.key === ' ') {
+    const btn = document.querySelector('[data-act="play-audio"]');
+    if (btn) {
+      event.preventDefault();
+      btn.click();
+    }
+  }
+});
+
+boot();

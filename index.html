@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Русский — Apprendre le russe</title>
+  <meta name="description" content="Apprendre le russe, du français vers le russe." />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
+  <meta name="theme-color" content="#14213d" />
+  <link rel="stylesheet" href="src/ui/app.css" />
+</head>
+<body>
+  <main id="app" aria-live="polite"></main>
+  <script type="module" src="src/ui/app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js').catch(() => {
+          // Hors ligne indisponible sur ce navigateur : l'app reste utilisable en ligne.
+        });
+      });
+    }
+  </script>
+</body>
+</html>
