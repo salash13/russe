@@ -9,7 +9,8 @@
 - **Ben**, francophone, autodidacte, pas développeur. Il a déjà appris tout l'alphabet cyrillique,
   mais il y a longtemps : **il faut le réactiver**, pas l'enseigner de zéro.
 - Objectifs, tous visés : **parler**, **lire**, **comprendre à l'écoute**, **écrire** (taper en cyrillique).
-- Appareils : **Mac et téléphone**, en alternance. La progression doit pouvoir passer de l'un à l'autre.
+- Appareils : **Mac et téléphone (Android, Samsung Galaxy)**, en alternance. La progression doit
+  pouvoir passer de l'un à l'autre.
 
 ### Décisions déjà prises
 
@@ -184,8 +185,9 @@ Une faute d'une seule lettre est signalée « presque » et montre la différenc
 
 ### 4.5 Contraintes produit
 
-- Fonctionne **hors ligne**, installable sur iPhone et Mac (PWA), avec un encart qui explique
-  « Ajouter à l'écran d'accueil » sur iPhone.
+- Fonctionne **hors ligne**, installable sur Android et Mac (PWA), avec un encart qui explique
+  « Installer l'application » sur Android (Chrome propose ce bouton nativement, contrairement à
+  Safari/iOS qui demande un « Ajouter à l'écran d'accueil » manuel — texte adapté selon le navigateur).
 - Utilisable **au doigt** (cibles ≥ 44 px) et **au clavier** (1-4, Entrée, Espace pour l'audio).
 - **Mode sombre** qui suit le système, avec un bouton pour forcer.
 - Taille du texte réglable (A− / A+).
@@ -322,7 +324,8 @@ Tout en **heure locale** (`dates.js`). Le changement de jour est détecté **aus
 
 ### 6.5 Audio
 
-- Web Speech API en `ru-RU` (voix Milena sur Mac et iPhone, de bonne qualité).
+- Web Speech API en `ru-RU` (voix Milena sur Mac, voix Google русский sur Android, toutes deux
+  de bonne qualité).
 - La synthèse place mal certains accents : pour les **paires minimales** et les mots piégeux,
   enregistrements (`content/audio/`, prioritaires). Sources possibles : enregistrements d'un natif, Forvo (licence à vérifier).
 - Pas de minuterie permanente : la synthèse n'est « réveillée » que pendant une lecture.
@@ -379,7 +382,7 @@ Même principe que le thaï : une checklist de questions fermées par mot et par
 2. Écrire `src/core/` (dates, storage, migrate, srs, cards, session) **avec leurs tests** avant toute interface.
 3. Écrire `content/letters.json` (33 lettres) et `lots.json`, puis le validateur.
 4. Interface minimale : Accueil → test de départ → séance → récapitulatif. Manifest + service worker.
-5. Déployer sur GitHub Pages et l'installer sur l'iPhone.
+5. Déployer sur GitHub Pages et l'installer sur le téléphone (Android, Galaxy).
 
 ## 10. Questions ouvertes (à trancher par Ben)
 
@@ -421,3 +424,6 @@ le gestionnaire unique `data-act` ; zéro dépendance ; l'export JSON ; la gamif
 
 - **24/09/2026** — Projet séparé du thaï. Vanilla JS en modules, zéro build. FSRS. PWA dès la v0.1.
   N0 raccourci par un test de départ (Ben connaît déjà l'alphabet). Objectifs : les 4 compétences. Mac + téléphone.
+- **24/09/2026** — Correction : le téléphone de Ben est un **Samsung Galaxy S26 Ultra (Android)**,
+  pas un iPhone. Toutes les mentions d'iPhone dans ce document étaient une supposition erronée,
+  corrigées en Android/Chrome (§4.5, §6.5, §9).
