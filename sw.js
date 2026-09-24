@@ -4,7 +4,7 @@
 // contient la version : il change à chaque publication pour ne jamais mélanger ancien
 // code et nouveau contenu (les anciens caches sont supprimés à l'activation).
 
-const CACHE_NAME = 'russe-v1';
+const CACHE_NAME = 'russe-v2';
 
 const PRECACHE_URLS = [
   './',
@@ -52,20 +52,20 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Cache d'abord, réseau en secours (et mise à jour du cache quand le réseau répond) :
-// l'app doit s'ouvrir même sans connexion, y compris juste après une mise à jour de contenu.
+// Réseau d'abord, cache en secours seulement si hors ligne. Pendant que le projet bouge
+// encore beaucoup, "cache d'abord" a un vrai coût : une page déjà ouverte resert le vieux
+// code tant que le nom du cache n'a pas changé, même après une correction poussée en ligne.
+// "Réseau d'abord" élimine ce risque quand il y a du réseau, et garde le hors-ligne réel
+// (§6.6) grâce au cache pris en secours.
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      const network = fetch(event.request)
-        .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          return response;
-        })
-        .catch(() => cached);
-      return cached ?? network;
-    })
+    fetch(event.request)
+      .then((response) => {
+        const copy = response.clone();
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });

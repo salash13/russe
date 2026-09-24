@@ -5,13 +5,17 @@
 // doit jamais servir de référence pour la place de l'accent tonique — seulement pour le
 // son général d'une lettre ou d'un mot.
 //
-// Piège connu sur Android/Chrome : la liste des voix arrive parfois de façon asynchrone
-// (évènement "voiceschanged"), après le chargement de la page. Si on ne la charge qu'au
-// tout premier `speak()`, ce premier appel — souvent le tout début du test de départ —
-// risque de ne trouver aucune voix et de rester muet. On précharge donc la liste dès que
-// possible (voir primeVoices(), appelé par app.js au démarrage), sans jamais bloquer un
-// appel à speak() déclenché par un tapotement (ce blocage casserait le geste utilisateur
-// exigé par certains navigateurs mobiles pour autoriser le son).
+// Piège connu sur Chrome/Android : la liste des voix arrive parfois de façon asynchrone
+// (évènement "voiceschanged"), après le chargement de la page.
+//
+// Piège connu sur Safari/WebKit, plus tenace : getVoices() peut renvoyer un tableau vide
+// pendant plusieurs secondes après le chargement, sans que "voiceschanged" se déclenche de
+// façon fiable pour autant — alors même que la voix existe au niveau du système (confirmé
+// ici : `say -v Milena` fonctionne, mais speechSynthesis.getVoices() reste vide un bon
+// moment). On retente donc activement getVoices() à intervalles courts pendant quelques
+// secondes au démarrage (primeVoices()), sans jamais bloquer un appel à speak() déclenché
+// par un tapotement (un blocage casserait le geste utilisateur exigé par certains
+// navigateurs pour autoriser le son).
 
 let cachedVoice = null;
 let voicesLoaded = false;
@@ -31,6 +35,13 @@ if (typeof window !== 'undefined' && window.speechSynthesis) {
 export function primeVoices() {
   if (typeof window === 'undefined' || !window.speechSynthesis) return;
   refreshVoiceCache();
+  if (voicesLoaded) return;
+  let attempts = 0;
+  const retry = setInterval(() => {
+    attempts++;
+    refreshVoiceCache();
+    if (voicesLoaded || attempts >= 20) clearInterval(retry); // ~5 secondes au total
+  }, 250);
 }
 
 /**
