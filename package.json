@@ -1,0 +1,10 @@
+{
+  "name": "russe",
+  "private": true,
+  "type": "module",
+  "description": "Apprendre le russe (français → russe) — HTML/CSS/JS vanilla, zéro build, zéro dépendance.",
+  "scripts": {
+    "test": "node --test",
+    "serve": "node scripts/serve.mjs"
+  }
+}
