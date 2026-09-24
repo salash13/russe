@@ -9,7 +9,7 @@
 import { h } from '../dom.js';
 import { buildQuestion } from '../exercises.js';
 import { questionScreenHtml } from '../questionView.js';
-import { speak } from '../audio.js';
+import { speak, hasRussianVoice } from '../audio.js';
 import { composeSession, createSessionQueue } from '../../core/session.js';
 import { createCard, reviewCard, nextInterval, RATING } from '../../core/srs.js';
 import { today, addDays, diffDays } from '../../core/dates.js';
@@ -59,6 +59,12 @@ function renderDiscovery(app, id) {
       <p class="letter-sound">« ${h(letter.sound)} » — ${h(letter.hint)}</p>
       ${letter.falseFriend ? `<p class="letter-warning">⚠️ ${h(letter.falseFriend)}</p>` : ''}
       <button type="button" class="btn-audio" data-act="play-audio" aria-label="Écouter">🔊</button>
+      ${
+        hasRussianVoice() === false
+          ? `<p class="audio-warning">🔇 Aucune voix russe trouvée sur cet appareil — voir les
+             paramètres de synthèse vocale pour en installer une.</p>`
+          : ''
+      }
       <button type="button" class="btn-primary" data-act="reveal">Je suis prêt</button>
     </section>
   `;

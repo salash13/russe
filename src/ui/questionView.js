@@ -6,6 +6,7 @@
 // clavier gérées par app.js (data-key).
 
 import { h } from './dom.js';
+import { hasRussianVoice } from './audio.js';
 
 /**
  * @param {object} question - venant de exercises.js#buildQuestion
@@ -13,6 +14,10 @@ import { h } from './dom.js';
  *   sur chaque bouton de choix (ex. "answer" en séance, "placement-answer" au test de départ)
  */
 export function questionScreenHtml(question, { progressLabel, act }) {
+  // hasRussianVoice() renvoie null tant que la liste des voix n'est pas encore chargée :
+  // dans ce cas on ne montre rien plutôt que d'afficher un avertissement à tort.
+  const silentDevice = question.audioText && hasRussianVoice() === false;
+
   return `
     <section class="screen screen-question" aria-live="polite">
       <p class="session-progress">${h(progressLabel)}</p>
@@ -20,6 +25,12 @@ export function questionScreenHtml(question, { progressLabel, act }) {
         question.audioText
           ? `<button type="button" class="btn-audio" data-act="play-audio" aria-label="Écouter">🔊</button>`
           : `<p class="prompt-letter" lang="ru">${h(question.prompt)}</p>`
+      }
+      ${
+        silentDevice
+          ? `<p class="audio-warning">🔇 Aucune voix russe trouvée sur cet appareil. Réponds au jugé pour
+             l'instant — voir les paramètres de synthèse vocale pour installer une voix russe.</p>`
+          : ''
       }
       <h2 class="question-text">${h(question.label)}</h2>
       <div class="choices" role="group">

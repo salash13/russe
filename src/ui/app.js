@@ -7,6 +7,7 @@
 
 import { createStorage } from '../core/storage.js';
 import { loadContent } from './content.js';
+import { primeVoices } from './audio.js';
 import { renderHome } from './screens/home.js';
 import { startPlacement, onPlacementAnswer } from './screens/placementTest.js';
 import {
@@ -52,6 +53,7 @@ function exportCorrupted() {
 }
 
 async function boot() {
+  primeVoices(); // charge la liste des voix tôt, avant le premier tapotement (§audio.js)
   app.progress = app.storage.load();
   if (app.progress.corrupted) {
     renderCorrupted();

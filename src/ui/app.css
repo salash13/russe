@@ -197,6 +197,13 @@ h1 {
   margin: 0;
 }
 
+.audio-warning {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  max-width: 32ch;
+  margin: 0;
+}
+
 .recap-score {
   font-size: 1.4rem;
   font-weight: 600;

@@ -4,21 +4,44 @@
 // que pendant une lecture. Rappel du §8 : la synthèse place mal certains accents, elle ne
 // doit jamais servir de référence pour la place de l'accent tonique — seulement pour le
 // son général d'une lettre ou d'un mot.
+//
+// Piège connu sur Android/Chrome : la liste des voix arrive parfois de façon asynchrone
+// (évènement "voiceschanged"), après le chargement de la page. Si on ne la charge qu'au
+// tout premier `speak()`, ce premier appel — souvent le tout début du test de départ —
+// risque de ne trouver aucune voix et de rester muet. On précharge donc la liste dès que
+// possible (voir primeVoices(), appelé par app.js au démarrage), sans jamais bloquer un
+// appel à speak() déclenché par un tapotement (ce blocage casserait le geste utilisateur
+// exigé par certains navigateurs mobiles pour autoriser le son).
 
 let cachedVoice = null;
+let voicesLoaded = false;
 
-function pickVoice() {
-  if (cachedVoice) return cachedVoice;
+function refreshVoiceCache() {
   const voices = window.speechSynthesis?.getVoices?.() ?? [];
+  if (voices.length > 0) voicesLoaded = true;
   cachedVoice = voices.find((v) => v.lang === 'ru-RU') ?? voices.find((v) => v.lang?.startsWith('ru')) ?? null;
-  return cachedVoice;
+  return voices;
 }
 
 if (typeof window !== 'undefined' && window.speechSynthesis) {
-  // La liste des voix peut arriver après le premier appel : on la relit à chaque changement.
-  window.speechSynthesis.onvoiceschanged = () => {
-    cachedVoice = null;
-  };
+  window.speechSynthesis.addEventListener('voiceschanged', refreshVoiceCache);
+}
+
+/** À appeler tôt (au démarrage de l'app) pour que la voix soit déjà en cache au premier tapotement. */
+export function primeVoices() {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return;
+  refreshVoiceCache();
+}
+
+/**
+ * Vrai si une voix russe a été trouvée sur cet appareil. Tant que `primeVoices()` (ou un
+ * premier `speak()`) n'a pas encore reçu la liste des voix, renvoie `null` (indéterminé)
+ * plutôt que `false`, pour ne pas afficher un avertissement à tort pendant le chargement.
+ */
+export function hasRussianVoice() {
+  if (typeof window === 'undefined' || !window.speechSynthesis) return false;
+  if (!voicesLoaded) return null;
+  return cachedVoice != null;
 }
 
 /**
@@ -29,10 +52,15 @@ if (typeof window !== 'undefined' && window.speechSynthesis) {
 export function speak(text, { slow = false } = {}) {
   if (typeof window === 'undefined' || !window.speechSynthesis || !text) return;
   window.speechSynthesis.cancel();
+  if (!voicesLoaded) refreshVoiceCache();
+
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = 'ru-RU';
   utterance.rate = slow ? 0.6 : 1;
-  const voice = pickVoice();
-  if (voice) utterance.voice = voice;
+  if (cachedVoice) utterance.voice = cachedVoice;
+  utterance.onerror = (event) => {
+    // eslint-disable-next-line no-console -- utile pour diagnostiquer un appareil muet
+    console.warn('Synthèse vocale : échec de la lecture', event.error);
+  };
   window.speechSynthesis.speak(utterance);
 }
