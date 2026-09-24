@@ -67,7 +67,10 @@ export function speak(text, { slow = false } = {}) {
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = 'ru-RU';
   utterance.rate = slow ? 0.6 : 1;
-  if (cachedVoice) utterance.voice = cachedVoice;
+  // Assigner explicitement utterance.voice à un objet SpeechSynthesisVoice mis en cache est
+  // un bug connu de Chrome : ça peut faire échouer la lecture en silence (confirmé ici même
+  // : la même phrase fonctionne quand on laisse Chrome choisir via `lang` seul, et échoue
+  // quand on force `voice`). On laisse donc le navigateur choisir la voix à partir de `lang`.
   // eslint-disable-next-line no-console -- utile pour diagnostiquer un appareil muet
   utterance.onerror = (event) => console.warn('Synthèse vocale : échec de la lecture', event.error);
 
