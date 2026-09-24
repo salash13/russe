@@ -16,6 +16,14 @@
 // secondes au démarrage (primeVoices()), sans jamais bloquer un appel à speak() déclenché
 // par un tapotement (un blocage casserait le geste utilisateur exigé par certains
 // navigateurs pour autoriser le son).
+//
+// Piège trouvé en diagnostiquant avec Ben : Chrome propose souvent DEUX voix russes — une
+// locale (ex. "Milena", `localService: true`, fonctionne hors ligne) et une "en ligne" (ex.
+// "Google русский", `localService: false`, passe par un serveur Google). Si on laisse Chrome
+// choisir seul via `lang` uniquement, il peut prendre la voix en ligne ; si ce service est
+// inaccessible (réseau, blocage), la lecture échoue en silence, sans erreur exploitable,
+// même si la voix locale fonctionne très bien par ailleurs. On choisit donc toujours
+// explicitement une voix locale quand il y en a une.
 
 let cachedVoice = null;
 let voicesLoaded = false;
@@ -23,7 +31,8 @@ let voicesLoaded = false;
 function refreshVoiceCache() {
   const voices = window.speechSynthesis?.getVoices?.() ?? [];
   if (voices.length > 0) voicesLoaded = true;
-  cachedVoice = voices.find((v) => v.lang === 'ru-RU') ?? voices.find((v) => v.lang?.startsWith('ru')) ?? null;
+  const ru = voices.filter((v) => v.lang === 'ru-RU' || v.lang?.startsWith('ru'));
+  cachedVoice = ru.find((v) => v.localService) ?? ru[0] ?? null;
   return voices;
 }
 
@@ -67,13 +76,12 @@ export function speak(text, { slow = false } = {}) {
   const utterance = new SpeechSynthesisUtterance(text);
   utterance.lang = 'ru-RU';
   utterance.rate = slow ? 0.6 : 1;
-  // Ni utterance.voice, ni cancel() avant de parler : les deux se sont révélés capables de
-  // faire échouer la lecture en silence sur Chrome (confirmé en direct — l'ajout de cancel()
-  // a produit l'erreur "canceled" au lieu de corriger quoi que ce soit). Le seul schéma
-  // vérifié comme fonctionnant est le plus simple : construire l'utterance avec `lang`
-  // seulement, et appeler speak() directement. Si un son précédent est encore en cours,
-  // Chrome met simplement celui-ci à la suite dans sa file, ce qui est un compromis très
-  // acceptable pour de courts mots isolés.
+  // On assigne la voix locale explicitement (voir la note en tête de fichier) : sans ça,
+  // Chrome peut choisir tout seul une voix "en ligne" qui échoue en silence si son service
+  // n'est pas joignable. Pas de cancel() avant de parler (voir commit précédent) : empiler
+  // dans la file de Chrome plutôt qu'interrompre est un compromis très acceptable pour de
+  // courts mots isolés.
+  if (cachedVoice) utterance.voice = cachedVoice;
   // eslint-disable-next-line no-console -- utile pour diagnostiquer un appareil muet
   utterance.onerror = (event) => console.warn('Synthèse vocale : échec de la lecture', event.error);
   window.speechSynthesis.speak(utterance);
