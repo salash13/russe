@@ -45,4 +45,16 @@ test('migrate complète les champs manquants avec les valeurs par défaut', () =
   const migrated = migrate({ schema: CURRENT_SCHEMA });
   assert.deepEqual(migrated.cards, {});
   assert.equal(migrated.appVersion, null);
+  assert.equal(migrated.placementProgress, null);
+});
+
+test('migrate conserve une progression de test de départ bien formée', () => {
+  const placementProgress = { items: [{ letterId: 'a', facet: 'son' }], index: 1, results: { a: { son: true } } };
+  const migrated = migrate({ schema: CURRENT_SCHEMA, placementProgress });
+  assert.deepEqual(migrated.placementProgress, placementProgress);
+});
+
+test('migrate remet à null une progression de test de départ mal formée', () => {
+  const migrated = migrate({ schema: CURRENT_SCHEMA, placementProgress: { items: 'pas un tableau' } });
+  assert.equal(migrated.placementProgress, null);
 });

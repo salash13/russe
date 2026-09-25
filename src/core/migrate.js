@@ -25,7 +25,21 @@ function defaults() {
     settings: {},
     days: [],
     stats: {},
+    placementProgress: null,
   };
+}
+
+/** Une progression de test de départ sauvegardée doit avoir cette forme pour être reprise. */
+function isValidPlacementProgress(value) {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    Array.isArray(value.items) &&
+    typeof value.index === 'number' &&
+    typeof value.results === 'object' &&
+    value.results !== null &&
+    !Array.isArray(value.results)
+  );
 }
 
 // Une étape par version : migrations[n] fait passer un état du schéma n au schéma n+1.
@@ -77,6 +91,11 @@ export function migrate(raw) {
   if (!Array.isArray(state.days)) state.days = [];
   if (typeof state.stats !== 'object' || state.stats === null || Array.isArray(state.stats)) {
     state.stats = {};
+  }
+  if (state.placementProgress != null && !isValidPlacementProgress(state.placementProgress)) {
+    // Une progression de test corrompue ne casse pas tout l'état : on la traite comme
+    // absente (l'utilisateur recommencera juste ce test-là, rien d'autre n'est perdu).
+    state.placementProgress = null;
   }
 
   return state;

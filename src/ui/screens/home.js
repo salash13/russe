@@ -9,6 +9,7 @@ import { today, practicedDaysInMonth, computeStreak } from '../../core/dates.js'
 export function renderHome(app) {
   const { state } = app.progress;
   const placementDone = state.settings.placementDone === true;
+  const placementInProgress = state.placementProgress != null;
   const monthCount = practicedDaysInMonth(state.days, today());
   const streak = computeStreak(state.days, today());
 
@@ -20,7 +21,9 @@ export function renderHome(app) {
       ${
         placementDone
           ? `<button type="button" class="btn-primary" data-act="start-session">Ma séance</button>`
-          : `<button type="button" class="btn-primary" data-act="start-placement">Commencer le test de départ</button>`
+          : placementInProgress
+            ? `<button type="button" class="btn-primary" data-act="start-placement">Reprendre le test de départ</button>`
+            : `<button type="button" class="btn-primary" data-act="start-placement">Commencer le test de départ</button>`
       }
       <p class="stats">
         ${monthCount} jour${monthCount === 1 ? '' : 's'} pratiqué${monthCount === 1 ? '' : 's'} ce mois-ci

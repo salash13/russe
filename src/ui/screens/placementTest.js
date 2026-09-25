@@ -31,13 +31,35 @@ function hasAudibleSound(letter) {
   return letter.sound !== '(muet)';
 }
 
+/** Sauvegarde la progression du test en cours, pour pouvoir la reprendre après un rechargement. */
+function persistPlacementProgress(app) {
+  const p = app.runtime.placement;
+  app.progress.state.placementProgress = {
+    items: p.items,
+    index: p.index,
+    results: Object.fromEntries(p.results),
+  };
+  app.storage.save(app.progress.state);
+}
+
 export function startPlacement(app) {
-  const items = [];
-  for (const letter of app.content.letters) {
-    if (hasAudibleSound(letter)) items.push({ letterId: letter.id, facet: 'lettre' });
-    items.push({ letterId: letter.id, facet: 'son' });
+  const saved = app.progress.state.placementProgress;
+  if (saved) {
+    // Reprend là où on s'était arrêté (§ voir migrate.js pour la validation de forme).
+    app.runtime.placement = {
+      items: saved.items,
+      index: saved.index,
+      results: new Map(Object.entries(saved.results)),
+    };
+  } else {
+    const items = [];
+    for (const letter of app.content.letters) {
+      if (hasAudibleSound(letter)) items.push({ letterId: letter.id, facet: 'lettre' });
+      items.push({ letterId: letter.id, facet: 'son' });
+    }
+    app.runtime.placement = { items: shuffle(items), index: 0, results: new Map() };
+    persistPlacementProgress(app); // sauvegardé tout de suite : un refresh à la 1ʳᵉ question reprend le même ordre
   }
-  app.runtime.placement = { items: shuffle(items), index: 0, results: new Map() };
   app.runtime.screen = 'placement';
   renderPlacementItem(app);
 }
@@ -67,6 +89,7 @@ export function onPlacementAnswer(app, choiceId) {
   entry[facet] = correct;
   p.results.set(letterId, entry);
   p.index++;
+  persistPlacementProgress(app);
   renderPlacementItem(app);
 }
 
@@ -95,6 +118,7 @@ function finishPlacement(app) {
   }
 
   app.progress.state.settings.placementDone = true;
+  app.progress.state.placementProgress = null; // le test est fini, plus rien à reprendre
   app.storage.save(app.progress.state);
   app.runtime.screen = 'home';
   renderHome(app);
