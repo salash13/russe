@@ -5,6 +5,12 @@
 //   3 (lire à voix haute puis vérifier), pour un mot
 //   4 (où est l'accent ?), pour un mot
 //   7 (taper le mot entendu), pour un mot
+//
+// Piège trouvé en diagnostiquant avec Ben (25/09/2026, mesuré via `say` : ~1,3s contre
+// ~0,3s) : demander à la synthèse vocale de lire une lettre MAJUSCULE isolée la fait épeler
+// en entier (« заглавная буква тэ » = « lettre majuscule T »), alors que la minuscule
+// isolée donne juste le son attendu. Le texte donné à la synthèse pour une lettre utilise
+// donc toujours la minuscule (audio.js#speak), jamais la majuscule.
 
 import { splitSyllables, withStressMark } from '../core/text.js';
 
@@ -48,10 +54,12 @@ export function buildQuestion(letter, facet, allLetters) {
   }
 
   // facet === 'lettre' : on entend le son, on choisit la lettre correspondante.
+  // audioText utilise la MINUSCULE, jamais la majuscule (voir la note en tête de fichier :
+  // une majuscule isolée fait dire à la synthèse vocale « lettre majuscule X » en entier).
   const options = shuffle([letter, ...distractors]);
   return {
     kind: 'lettre',
-    audioText: letter.print,
+    audioText: letter.lower,
     label: 'Quelle lettre entends-tu ?',
     correctId: letter.id,
     explanation: explanationFor(letter),

@@ -65,7 +65,9 @@ function renderDiscovery(app, id) {
 
 function renderLetterDiscovery(app, elementId) {
   const letter = app.content.lettersById.get(elementId);
-  app.runtime.audioText = letter.print;
+  // Minuscule pour l'audio, jamais la majuscule (voir la note en tête de exercises.js :
+  // une majuscule isolée fait épeler "lettre majuscule X" en entier à la synthèse vocale).
+  app.runtime.audioText = letter.lower;
 
   document.getElementById('app').innerHTML = `
     <section class="screen screen-discovery" aria-live="polite">
@@ -77,7 +79,7 @@ function renderLetterDiscovery(app, elementId) {
       <button type="button" class="btn-primary" data-act="reveal">Je suis prêt</button>
     </section>
   `;
-  speak(letter.print);
+  speak(letter.lower);
 }
 
 function renderWordDiscovery(app, elementId) {
