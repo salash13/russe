@@ -1,0 +1,74 @@
+[
+  {
+    "id": "taksi", "ru": "такси", "stress": 2,
+    "fr": "taxi", "pos": "nom", "gender": "n",
+    "pron": "ta-KSI",
+    "forms": {},
+    "unit": "n0-lecture", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "", "date": "", "ok": false }
+  },
+  {
+    "id": "metro", "ru": "метро", "stress": 2,
+    "fr": "métro", "pos": "nom", "gender": "n",
+    "pron": "mi-TRO",
+    "forms": {},
+    "unit": "n0-lecture", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "", "date": "", "ok": false }
+  },
+  {
+    "id": "kofe", "ru": "кофе", "stress": 1,
+    "fr": "café", "pos": "nom", "gender": "m",
+    "pron": "KO-fe",
+    "forms": {},
+    "unit": "n0-lecture", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "", "date": "", "ok": false }
+  },
+  {
+    "id": "mama", "ru": "мама", "stress": 1,
+    "fr": "maman", "pos": "nom", "gender": "f",
+    "pron": "MA-ma",
+    "forms": {},
+    "unit": "n0-lecture", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "", "date": "", "ok": false }
+  },
+  {
+    "id": "restoran", "ru": "ресторан", "stress": 3,
+    "fr": "restaurant", "pos": "nom", "gender": "m",
+    "pron": "ri-sta-RAN",
+    "forms": {},
+    "unit": "n0-lecture", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "", "date": "", "ok": false }
+  },
+  {
+    "id": "banan", "ru": "банан", "stress": 2,
+    "fr": "banane", "pos": "nom", "gender": "m",
+    "pron": "ba-NAN",
+    "forms": {},
+    "unit": "n0-lecture", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "", "date": "", "ok": false }
+  },
+  {
+    "id": "kino", "ru": "кино", "stress": 2,
+    "fr": "cinéma", "pos": "nom", "gender": "n",
+    "pron": "ki-NO",
+    "forms": {},
+    "unit": "n0-lecture", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "", "date": "", "ok": false }
+  },
+  {
+    "id": "futbol", "ru": "футбол", "stress": 2,
+    "fr": "football", "pos": "nom", "gender": "m",
+    "pron": "fut-BOL",
+    "forms": {},
+    "unit": "n0-lecture", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "", "date": "", "ok": false }
+  }
+]
