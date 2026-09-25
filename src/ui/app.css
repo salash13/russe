@@ -220,6 +220,34 @@ h1 {
   font-weight: 600;
 }
 
+.result-heading {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin: 8px 0 0;
+}
+
+.letter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 0;
+  max-width: 100%;
+}
+
+.letter-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 1.1rem;
+}
+
 .word-input {
   width: 100%;
   min-height: 56px;

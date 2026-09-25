@@ -6,13 +6,13 @@
 // par une fiche de découverte ; les autres suivent le parcours normal (carte neuve, due
 // aujourd'hui — elles seront découvertes à la première séance, voir sessionScreen.js).
 
+import { h } from '../dom.js';
 import { buildQuestion } from '../exercises.js';
 import { questionScreenHtml } from '../questionView.js';
 import { speak } from '../audio.js';
 import { makeCardId } from '../../core/cards.js';
 import { createCard, nextInterval, RATING } from '../../core/srs.js';
 import { today, addDays } from '../../core/dates.js';
-import { renderHome } from './home.js';
 
 function shuffle(array) {
   const copy = [...array];
@@ -97,12 +97,15 @@ function finishPlacement(app) {
   const p = app.runtime.placement;
   const nowDay = today();
   const retention = app.progress.state.settings.retention ?? 0.9;
+  const knownLetters = [];
+  const toLearnLetters = [];
 
   for (const letter of app.content.letters) {
     const result = p.results.get(letter.id) ?? {};
     const audible = hasAudibleSound(letter);
     const known = audible ? result.son === true && result.lettre === true : result.son === true;
     const facets = audible ? ['son', 'lettre'] : ['son'];
+    (known ? knownLetters : toLearnLetters).push(letter);
     for (const facet of facets) {
       const id = makeCardId('letter', letter.id, facet);
       if (known) {
@@ -120,8 +123,38 @@ function finishPlacement(app) {
   app.progress.state.settings.placementDone = true;
   app.progress.state.placementProgress = null; // le test est fini, plus rien à reprendre
   app.storage.save(app.progress.state);
-  app.runtime.screen = 'home';
-  renderHome(app);
+  app.runtime.screen = 'placement-result';
+  renderPlacementResult(app, knownLetters, toLearnLetters);
+}
+
+/** Écran de résultat (§ demandé par Ben, absent à l'origine) : pas de correction question par
+ * question pendant le test lui-même (ça reste un test rapide, sans souffler les réponses en
+ * route), mais un bilan clair une fois fini. */
+function renderPlacementResult(app, knownLetters, toLearnLetters) {
+  const total = knownLetters.length + toLearnLetters.length;
+  const letterChip = (l) => `<span class="letter-chip" lang="ru">${h(l.print)}</span>`;
+
+  document.getElementById('app').innerHTML = `
+    <section class="screen screen-placement-result">
+      <h1>Test de départ terminé</h1>
+      <p class="recap-score">${h(knownLetters.length)} / ${h(total)} lettres déjà connues</p>
+
+      ${
+        knownLetters.length > 0
+          ? `<h2 class="result-heading">Déjà connues</h2>
+             <p class="letter-chips">${knownLetters.map(letterChip).join(' ')}</p>`
+          : ''
+      }
+      ${
+        toLearnLetters.length > 0
+          ? `<h2 class="result-heading">À apprendre</h2>
+             <p class="letter-chips">${toLearnLetters.map(letterChip).join(' ')}</p>`
+          : ''
+      }
+
+      <button type="button" class="btn-primary" data-act="go-home">Continuer</button>
+    </section>
+  `;
 }
 
 /**
