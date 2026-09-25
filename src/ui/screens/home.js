@@ -34,6 +34,7 @@ export function renderHome(app) {
           ? `<button type="button" class="btn-link" data-act="restart-placement">Refaire le test de départ</button>`
           : ''
       }
+      <button type="button" class="btn-link" data-act="show-rules">Règles de lecture</button>
     </section>
   `;
 }

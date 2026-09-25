@@ -21,6 +21,7 @@ const PRECACHE_URLS = [
   './src/ui/screens/home.js',
   './src/ui/screens/placementTest.js',
   './src/ui/screens/sessionScreen.js',
+  './src/ui/screens/rulesScreen.js',
   './src/core/dates.js',
   './src/core/text.js',
   './src/core/cards.js',

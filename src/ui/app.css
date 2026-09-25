@@ -252,6 +252,40 @@ h1 {
   font-size: 1.1rem;
 }
 
+.screen-rules {
+  align-items: stretch;
+  text-align: left;
+  max-width: 100%;
+}
+
+.screen-rules h1 {
+  text-align: center;
+}
+
+.rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rule-card {
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.rule-title {
+  margin: 0 0 6px;
+  font-size: 1.05rem;
+}
+
+.rule-explanation {
+  margin: 0;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
 .syllables {
   display: flex;
   flex-wrap: wrap;

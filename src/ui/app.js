@@ -11,6 +11,7 @@ import { loadContent, seedWordCards } from './content.js';
 import { primeVoices } from './audio.js';
 import { insertChar, backspace } from './keyboard.js';
 import { renderHome } from './screens/home.js';
+import { renderRules } from './screens/rulesScreen.js';
 import { startPlacement, onPlacementAnswer, restartPlacement } from './screens/placementTest.js';
 import {
   startSession,
@@ -118,6 +119,9 @@ document.addEventListener('click', (event) => {
       break;
     case 'go-home':
       renderHome(app);
+      break;
+    case 'show-rules':
+      renderRules(app);
       break;
     case 'export-corrupted':
       exportCorrupted();
