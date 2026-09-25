@@ -59,3 +59,29 @@ export function compareAnswer(input, expected) {
   const distance = levenshtein(a, b);
   return { correct: false, close: distance === 1, distance };
 }
+
+const RUSSIAN_VOWELS = new Set(['а', 'е', 'ё', 'и', 'о', 'у', 'ы', 'э', 'ю', 'я']);
+
+/**
+ * Découpe un mot russe en syllabes, par la règle de l'attaque maximale (les consonnes entre
+ * deux voyelles rejoignent la syllabe suivante) : мама → ма-ма, ресторан → ре-сто-ран.
+ * Sert à l'exercice 4 (« Où est l'accent ? », §4.2) : ce n'est pas un découpage
+ * phonologiquement parfait dans tous les cas, mais il correspond à la convention déjà
+ * utilisée dans le champ "pron" du contenu (§5.3, ex. "ma-la-KO").
+ * @param {string} word
+ * @returns {string[]} les syllabes, dans l'ordre, casse d'origine conservée
+ */
+export function splitSyllables(word) {
+  const lower = word.toLowerCase();
+  const vowelIndices = [];
+  for (let i = 0; i < lower.length; i++) {
+    if (RUSSIAN_VOWELS.has(lower[i])) vowelIndices.push(i);
+  }
+  if (vowelIndices.length === 0) return [word];
+
+  const starts = [0];
+  for (let i = 1; i < vowelIndices.length; i++) {
+    starts.push(vowelIndices[i - 1] + 1);
+  }
+  return starts.map((start, i) => word.slice(start, i + 1 < starts.length ? starts[i + 1] : word.length));
+}

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { stripStress, normalize, levenshtein, compareAnswer } from '../src/core/text.js';
+import { stripStress, normalize, levenshtein, compareAnswer, splitSyllables } from '../src/core/text.js';
 
 test('stripStress retire l\'accent aigu combinant', () => {
   assert.equal(stripStress('молоко́'), 'молоко');
@@ -45,4 +45,25 @@ test('compareAnswer : une faute de plusieurs lettres n\'est pas "presque"', () =
   const result = compareAnswer('стол', 'молоко');
   assert.equal(result.correct, false);
   assert.equal(result.close, false);
+});
+
+test('splitSyllables : découpe correspondant au style "pron" du contenu (§5.3)', () => {
+  assert.deepEqual(splitSyllables('мама'), ['ма', 'ма']);
+  assert.deepEqual(splitSyllables('молоко'), ['мо', 'ло', 'ко']);
+  assert.deepEqual(splitSyllables('ресторан'), ['ре', 'сто', 'ран']);
+  assert.deepEqual(splitSyllables('такси'), ['та', 'кси']);
+});
+
+test('splitSyllables : conserve la casse d\'origine', () => {
+  assert.deepEqual(splitSyllables('Мама'), ['Ма', 'ма']);
+});
+
+test('splitSyllables : un mot sans voyelle (garde-fou) renvoie le mot entier', () => {
+  assert.deepEqual(splitSyllables('ъ'), ['ъ']);
+});
+
+test('splitSyllables : les syllabes mises bout à bout reforment le mot', () => {
+  for (const word of ['мама', 'молоко', 'ресторан', 'такси', 'кофе', 'банан', 'кино', 'футбол']) {
+    assert.equal(splitSyllables(word).join(''), word);
+  }
 });

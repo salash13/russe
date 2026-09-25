@@ -7,7 +7,7 @@
 // revient avant la fin de la séance (comportement de core/session.js#createSessionQueue).
 
 import { h } from '../dom.js';
-import { buildQuestion, buildWordListening } from '../exercises.js';
+import { buildQuestion, buildWordListening, buildAccentQuestion } from '../exercises.js';
 import { questionScreenHtml } from '../questionView.js';
 import { keyboardHtml } from '../keyboard.js';
 import { speak, hasRussianVoice } from '../audio.js';
@@ -106,6 +106,15 @@ function renderQuestion(app, id) {
   const position = app.runtime.queue.total - app.runtime.queue.remaining + 1;
   const progressLabel = `${position} / ${app.runtime.queue.total}`;
 
+  if (type === 'word' && facet === 'accent') {
+    const word = app.content.wordsById.get(elementId);
+    const question = buildAccentQuestion(word);
+    app.runtime.currentQuestion = question;
+    app.runtime.audioText = null; // exercice visuel : rien à écouter par défaut
+    renderAccentScreen(question, progressLabel);
+    return;
+  }
+
   if (type === 'word') {
     const word = app.content.wordsById.get(elementId);
     const question = buildWordListening(word);
@@ -122,6 +131,26 @@ function renderQuestion(app, id) {
   app.runtime.audioText = question.audioText ?? null;
   document.getElementById('app').innerHTML = questionScreenHtml(question, { progressLabel, act: 'answer' });
   if (question.audioText) speak(question.audioText);
+}
+
+/** Exercice 4 (§4.2) : toucher la syllabe accentuée. Une syllabe = un bouton, réponse immédiate. */
+function renderAccentScreen(question, progressLabel) {
+  document.getElementById('app').innerHTML = `
+    <section class="screen screen-question" aria-live="polite">
+      <p class="session-progress">${h(progressLabel)}</p>
+      <h2 class="question-text">${h(question.label)}</h2>
+      <div class="syllables" role="group">
+        ${question.syllables
+          .map(
+            (syllable, i) => `
+          <button type="button" class="syllable" data-act="accent-answer" data-index="${i}" lang="ru">
+            ${h(syllable)}
+          </button>`
+          )
+          .join('')}
+      </div>
+    </section>
+  `;
 }
 
 /** Exercice 7 (§4.2) : écouter, taper au clavier cyrillique à l'écran, valider. */
@@ -144,6 +173,13 @@ function renderTypingScreen(question, progressLabel) {
 export function onSessionAnswer(app, choiceId) {
   const question = app.runtime.currentQuestion;
   app.runtime.pendingCorrect = choiceId === question.correctId;
+  renderFeedback(app, app.runtime.pendingCorrect, question);
+}
+
+/** Valide la réponse de l'exercice 4 (§4.2) : l'index de syllabe touché. */
+export function onSessionAccentAnswer(app, index) {
+  const question = app.runtime.currentQuestion;
+  app.runtime.pendingCorrect = index === question.correctIndex;
   renderFeedback(app, app.runtime.pendingCorrect, question);
 }
 

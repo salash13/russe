@@ -4,6 +4,7 @@
 // que `isPresentable` (src/core/cards.js) sache les reconnaître.
 
 import { registerCardType, makeCardId } from '../core/cards.js';
+import { splitSyllables } from '../core/text.js';
 
 let cache = null;
 
@@ -46,14 +47,18 @@ export async function loadContent() {
     },
   });
 
-  // Une carte "word:<id>:ecoute" (exercice 7, §4.2 : taper le mot entendu) ne peut être
-  // présentée que si le mot existe ET a été relu par un natif (§2.9, §5.5 : rien n'est
-  // publié sans relecture — appliqué ici au niveau du SRS, pas seulement à l'affichage).
+  // Une carte "word:<id>:ecoute" (exercice 7, taper le mot entendu) ou "word:<id>:accent"
+  // (exercice 4, où est l'accent ?) ne peut être présentée que si le mot existe ET a été
+  // relu par un natif (§2.9, §5.5 : rien n'est publié sans relecture — appliqué ici au
+  // niveau du SRS, pas seulement à l'affichage). La facette "accent" n'a de sens que pour
+  // un mot d'au moins deux syllabes : sur une seule syllabe, la question n'en est pas une.
   registerCardType('word', {
-    facets: ['ecoute'],
+    facets: ['ecoute', 'accent'],
     canPresent: (parsed) => {
       const word = wordsById.get(parsed.elementId);
-      return word != null && word.reviewed?.ok === true;
+      if (!word || word.reviewed?.ok !== true) return false;
+      if (parsed.facet === 'accent' && splitSyllables(word.ru).length < 2) return false;
+      return true;
     },
   });
 
@@ -70,10 +75,13 @@ export function seedWordCards(cardsState, words, todayKey) {
   let added = 0;
   for (const word of words) {
     if (word.reviewed?.ok !== true) continue;
-    const id = makeCardId('word', word.id, 'ecoute');
-    if (cardsState[id]) continue;
-    cardsState[id] = { difficulty: 5, stability: 0.5, reps: 0, lapses: 0, due: todayKey };
-    added++;
+    const facets = splitSyllables(word.ru).length >= 2 ? ['ecoute', 'accent'] : ['ecoute'];
+    for (const facet of facets) {
+      const id = makeCardId('word', word.id, facet);
+      if (cardsState[id]) continue;
+      cardsState[id] = { difficulty: 5, stability: 0.5, reps: 0, lapses: 0, due: todayKey };
+      added++;
+    }
   }
   return added;
 }

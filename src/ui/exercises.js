@@ -2,7 +2,10 @@
 //
 // Construit les questions des exercices du §4.2 :
 //   1 (lettre → son) et 2 (son → lettre), pour une lettre et une facette donnée
+//   4 (où est l'accent ?), pour un mot
 //   7 (taper le mot entendu), pour un mot
+
+import { splitSyllables } from '../core/text.js';
 
 function shuffle(array) {
   const copy = [...array];
@@ -66,6 +69,25 @@ export function buildWordListening(word) {
     audioText: word.ru,
     label: 'Écoute et tape le mot que tu entends',
     expected: word.ru,
+    explanation: `${word.ru} — ${word.fr}`,
+  };
+}
+
+/**
+ * Exercice 4 (§4.2) : toucher la syllabe accentuée. `word.stress` (1 = première syllabe)
+ * vient du contenu (§5.3) ; le découpage en syllabes suit core/text.js#splitSyllables.
+ * @param {object} word - une entrée de content/words/*.json, avec au moins 2 syllabes
+ */
+export function buildAccentQuestion(word) {
+  const syllables = splitSyllables(word.ru);
+  const correctIndex = word.stress - 1;
+  return {
+    kind: 'accent',
+    label: 'Où est l\'accent ?',
+    syllables,
+    correctIndex,
+    // Affiché dans le feedback en cas d'erreur : la syllabe accentuée en majuscules.
+    expected: syllables.map((s, i) => (i === correctIndex ? s.toUpperCase() : s)).join('-'),
     explanation: `${word.ru} — ${word.fr}`,
   };
 }

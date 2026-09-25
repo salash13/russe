@@ -15,6 +15,7 @@ import { startPlacement, onPlacementAnswer, restartPlacement } from './screens/p
 import {
   startSession,
   onSessionAnswer,
+  onSessionAccentAnswer,
   onSessionSubmitTyped,
   onSessionRate,
   onSessionReveal,
@@ -95,6 +96,9 @@ document.addEventListener('click', (event) => {
       break;
     case 'answer':
       onSessionAnswer(app, el.dataset.choice);
+      break;
+    case 'accent-answer':
+      onSessionAccentAnswer(app, Number(el.dataset.index));
       break;
     case 'submit-typed':
       onSessionSubmitTyped(app);
