@@ -4,7 +4,7 @@
 // contient la version : il change à chaque publication pour ne jamais mélanger ancien
 // code et nouveau contenu (les anciens caches sont supprimés à l'activation).
 
-const CACHE_NAME = 'russe-v2';
+const CACHE_NAME = 'russe-v3';
 
 const PRECACHE_URLS = [
   './',
@@ -17,6 +17,7 @@ const PRECACHE_URLS = [
   './src/ui/content.js',
   './src/ui/exercises.js',
   './src/ui/questionView.js',
+  './src/ui/keyboard.js',
   './src/ui/screens/home.js',
   './src/ui/screens/placementTest.js',
   './src/ui/screens/sessionScreen.js',
@@ -29,16 +30,35 @@ const PRECACHE_URLS = [
   './src/core/session.js',
   './content/letters.json',
   './content/lots.json',
+  './content/rules.json',
+  './content/words/index.json',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
   './assets/icons/favicon.svg',
 ];
 
+// Les fichiers de mots ne sont pas listés en dur ici : on lit words/index.json (la même
+// liste que content.js utilise) pour précharger tout ce qu'il contient, sans dupliquer
+// cette liste à un deuxième endroit (§6.2 : jamais deux sources de vérité).
+async function precacheWordFiles(cache) {
+  try {
+    const res = await fetch('./content/words/index.json');
+    const names = await res.json();
+    await cache.addAll(names.map((name) => `./content/words/${name}`));
+  } catch {
+    // Pas grave si ça échoue à l'installation : le réseau-d'abord du fetch handler
+    // remplira le cache à la première visite en ligne.
+  }
+}
+
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(CACHE_NAME)
-      .then((cache) => cache.addAll(PRECACHE_URLS))
+      .then(async (cache) => {
+        await cache.addAll(PRECACHE_URLS);
+        await precacheWordFiles(cache);
+      })
       .then(() => self.skipWaiting())
   );
 });

@@ -1,23 +1,35 @@
 // src/ui/content.js
 //
-// Charge le contenu (§5) et déclare comment les cartes de lettres se présentent (§4.3),
-// pour que `isPresentable` (src/core/cards.js) sache les reconnaître.
+// Charge le contenu (§5) et déclare comment chaque type de carte se présente (§4.3), pour
+// que `isPresentable` (src/core/cards.js) sache les reconnaître.
 
-import { registerCardType } from '../core/cards.js';
-import { makeCardId } from '../core/cards.js';
+import { registerCardType, makeCardId } from '../core/cards.js';
 
 let cache = null;
 
-/** Charge (une seule fois) letters.json et lots.json, et enregistre le type de carte "letter". */
+/**
+ * Charge (une seule fois) letters.json, lots.json, rules.json et tous les fichiers de
+ * content/words/ (listés dans words/index.json — le navigateur ne peut pas lister un
+ * dossier lui-même), et enregistre les types de carte "letter" et "word".
+ */
 export async function loadContent() {
   if (cache) return cache;
 
-  const [letters, lots] = await Promise.all([
+  const [letters, lots, rules, wordIndex] = await Promise.all([
     fetch('content/letters.json').then((r) => r.json()),
     fetch('content/lots.json').then((r) => r.json()),
+    fetch('content/rules.json').then((r) => r.json()),
+    fetch('content/words/index.json').then((r) => r.json()),
   ]);
+
+  const wordFiles = await Promise.all(
+    wordIndex.map((name) => fetch(`content/words/${name}`).then((r) => r.json()))
+  );
+  const words = wordFiles.flat();
+
   const lettersById = new Map(letters.map((l) => [l.id, l]));
-  cache = { letters, lots, lettersById };
+  const wordsById = new Map(words.map((w) => [w.id, w]));
+  cache = { letters, lots, rules, words, lettersById, wordsById };
 
   // Une carte "letter:<id>:son" ou "letter:<id>:lettre" ne peut être présentée que si la
   // lettre existe encore dans le contenu chargé (§4.3 : toute carte planifiée doit pouvoir
@@ -34,7 +46,36 @@ export async function loadContent() {
     },
   });
 
+  // Une carte "word:<id>:ecoute" (exercice 7, §4.2 : taper le mot entendu) ne peut être
+  // présentée que si le mot existe ET a été relu par un natif (§2.9, §5.5 : rien n'est
+  // publié sans relecture — appliqué ici au niveau du SRS, pas seulement à l'affichage).
+  registerCardType('word', {
+    facets: ['ecoute'],
+    canPresent: (parsed) => {
+      const word = wordsById.get(parsed.elementId);
+      return word != null && word.reviewed?.ok === true;
+    },
+  });
+
   return cache;
+}
+
+/**
+ * Ajoute une carte neuve (due aujourd'hui) pour chaque mot relu qui n'a pas encore de carte,
+ * afin qu'il entre dans le cycle normal de séance (découverte puis révision espacée). Les
+ * mots non relus n'obtiennent jamais de carte : ils resteront invisibles (§5.5).
+ * @returns {number} le nombre de cartes ajoutées
+ */
+export function seedWordCards(cardsState, words, todayKey) {
+  let added = 0;
+  for (const word of words) {
+    if (word.reviewed?.ok !== true) continue;
+    const id = makeCardId('word', word.id, 'ecoute');
+    if (cardsState[id]) continue;
+    cardsState[id] = { difficulty: 5, stability: 0.5, reps: 0, lapses: 0, due: todayKey };
+    added++;
+  }
+  return added;
 }
 
 /** Les deux identifiants de carte associés à une lettre (facette "son" et facette "lettre"). */

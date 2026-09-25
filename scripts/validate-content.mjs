@@ -256,19 +256,41 @@ export function checkWords(words, fileLabel = 'words.json') {
   return errors;
 }
 
-/** Liste et charge tous les fichiers content/words/*.json, triés par nom. */
+/**
+ * L'app (navigateur) ne peut pas lister un dossier : elle lit `words/index.json` pour
+ * savoir quels fichiers charger. On vérifie ici qu'il ne peut jamais partir en désaccord
+ * avec ce qui existe réellement sur disque (§6.2 : jamais deux sources de vérité).
+ * @returns {string[]}
+ */
+export function checkWordIndex(indexList, actualFileNames) {
+  if (!Array.isArray(indexList)) return ['words/index.json doit contenir un tableau de noms de fichiers.'];
+  const errors = [];
+  const actual = new Set(actualFileNames);
+  const listed = new Set(indexList);
+  for (const name of indexList) {
+    if (!actual.has(name)) errors.push(`words/index.json référence "${name}", introuvable dans content/words/.`);
+  }
+  for (const name of actualFileNames) {
+    if (!listed.has(name)) errors.push(`content/words/${name} existe mais n'est pas listé dans words/index.json.`);
+  }
+  return errors;
+}
+
+/** Liste et charge tous les fichiers content/words/*.json (hors index.json), triés par nom. */
 async function readAllWordFiles() {
   let names;
   try {
-    names = (await readdir(path.join(CONTENT_DIR, 'words'))).filter((f) => f.endsWith('.json')).sort();
+    names = (await readdir(path.join(CONTENT_DIR, 'words')))
+      .filter((f) => f.endsWith('.json') && f !== 'index.json')
+      .sort();
   } catch {
-    return [];
+    return { files: [], names: [] };
   }
   const files = [];
   for (const name of names) {
     files.push({ file: `words/${name}`, data: await readContentJson(`words/${name}`) });
   }
-  return files;
+  return { files, names };
 }
 
 /** Résumé de couverture par lot (nombre de lettres), pour l'affichage en console. */
@@ -307,7 +329,14 @@ async function main() {
   if (lots !== null) errors.push(...checkLots(lots, letters ?? []));
   if (rules !== null) errors.push(...checkRules(rules));
 
-  const wordFiles = await readAllWordFiles();
+  const { files: wordFiles, names: wordFileNames } = await readAllWordFiles();
+  try {
+    const wordIndex = await readContentJson('words/index.json');
+    errors.push(...checkWordIndex(wordIndex, wordFileNames));
+  } catch (e) {
+    errors.push(e.message);
+  }
+
   const allWords = [];
   for (const { file, data } of wordFiles) {
     errors.push(...checkWords(data, file));

@@ -1,7 +1,8 @@
 // src/ui/exercises.js
 //
-// Construit les questions des exercices 1 (lettre → son) et 2 (son → lettre) du §4.2, pour
-// une lettre et une facette de carte données ("son" ou "lettre" — voir content.js).
+// Construit les questions des exercices du §4.2 :
+//   1 (lettre → son) et 2 (son → lettre), pour une lettre et une facette donnée
+//   7 (taper le mot entendu), pour un mot
 
 function shuffle(array) {
   const copy = [...array];
@@ -51,5 +52,20 @@ export function buildQuestion(letter, facet, allLetters) {
     correctId: letter.id,
     explanation: explanationFor(letter),
     choices: options.map((l) => ({ id: l.id, label: `${l.print} ${l.lower}`, lang: 'ru' })),
+  };
+}
+
+/**
+ * Exercice 7 (§4.2) : écouter un mot et le taper au clavier. La tolérance de saisie
+ * (ё/е, accent, majuscules, "presque") est appliquée par core/text.js#compareAnswer, pas ici.
+ * @param {object} word - une entrée de content/words/*.json
+ */
+export function buildWordListening(word) {
+  return {
+    kind: 'type',
+    audioText: word.ru,
+    label: 'Écoute et tape le mot que tu entends',
+    expected: word.ru,
+    explanation: `${word.ru} — ${word.fr}`,
   };
 }
