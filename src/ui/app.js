@@ -11,7 +11,7 @@ import { loadContent, seedWordCards } from './content.js';
 import { primeVoices } from './audio.js';
 import { insertChar, backspace } from './keyboard.js';
 import { renderHome } from './screens/home.js';
-import { startPlacement, onPlacementAnswer } from './screens/placementTest.js';
+import { startPlacement, onPlacementAnswer, restartPlacement } from './screens/placementTest.js';
 import {
   startSession,
   onSessionAnswer,
@@ -80,6 +80,12 @@ document.addEventListener('click', (event) => {
   switch (act) {
     case 'start-placement':
       startPlacement(app);
+      break;
+    case 'restart-placement':
+      // Destructif pour les cartes de lettres (pas pour le reste) : on demande confirmation.
+      if (window.confirm('Refaire le test de départ ? Ta progression sur les lettres sera remise à zéro (le reste de ta progression est conservé).')) {
+        restartPlacement(app);
+      }
       break;
     case 'placement-answer':
       onPlacementAnswer(app, el.dataset.choice);

@@ -100,6 +100,17 @@ h1 {
   filter: brightness(1.1);
 }
 
+.btn-link {
+  min-height: 44px;
+  padding: 8px 12px;
+  font-size: 0.9rem;
+  border: none;
+  background: none;
+  color: var(--text-muted);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .btn-audio {
   min-width: 64px;
   min-height: 64px;

@@ -29,6 +29,11 @@ export function renderHome(app) {
         ${monthCount} jour${monthCount === 1 ? '' : 's'} pratiqué${monthCount === 1 ? '' : 's'} ce mois-ci
         ${streak > 0 ? ` · série de ${h(streak)} jour${streak === 1 ? '' : 's'}` : ''}
       </p>
+      ${
+        placementDone
+          ? `<button type="button" class="btn-link" data-act="restart-placement">Refaire le test de départ</button>`
+          : ''
+      }
     </section>
   `;
 }

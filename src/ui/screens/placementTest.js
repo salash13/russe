@@ -123,3 +123,19 @@ function finishPlacement(app) {
   app.runtime.screen = 'home';
   renderHome(app);
 }
+
+/**
+ * Refait le test de départ depuis zéro, à la demande (§ voir home.js — sans ça, une fois le
+ * test fini, rien ne permettait jamais d'y revenir). Efface les cartes de lettres créées par
+ * le précédent passage — mais pas les cartes de mots ni le reste de la progression — pour
+ * repartir sur un résultat propre plutôt que de mélanger deux passages.
+ */
+export function restartPlacement(app) {
+  for (const key of Object.keys(app.progress.state.cards)) {
+    if (key.startsWith('letter:')) delete app.progress.state.cards[key];
+  }
+  app.progress.state.settings.placementDone = false;
+  app.progress.state.placementProgress = null;
+  app.storage.save(app.progress.state);
+  startPlacement(app);
+}
