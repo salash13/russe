@@ -23,6 +23,7 @@ import {
   onSessionReveal,
   replayCurrentAudio,
   onPlayWord,
+  onTraceReveal,
 } from './screens/sessionScreen.js';
 
 const backend = {
@@ -109,6 +110,9 @@ document.addEventListener('click', (event) => {
       break;
     case 'reveal-read':
       onReadAloudReveal(app);
+      break;
+    case 'reveal-trace':
+      onTraceReveal(app);
       break;
     case 'rate':
       onSessionRate(app, Number(el.dataset.rating));

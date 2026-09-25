@@ -118,6 +118,12 @@ function finishPlacement(app) {
         app.progress.state.cards[id] = { difficulty: 5, stability: 0.5, reps: 0, lapses: 0, due: nowDay };
       }
     }
+    // Le test de départ n'évalue que son/lettre (§3.2) : la cursive (exercices 5 et 6)
+    // démarre toujours neuve, même pour une lettre déjà connue à l'oral.
+    for (const cursiveFacet of ['cursive', 'trace']) {
+      const id = makeCardId('letter', letter.id, cursiveFacet);
+      app.progress.state.cards[id] = { difficulty: 5, stability: 0.5, reps: 0, lapses: 0, due: nowDay };
+    }
   }
 
   app.progress.state.settings.placementDone = true;

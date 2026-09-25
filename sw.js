@@ -37,6 +37,7 @@ const PRECACHE_URLS = [
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
   './assets/icons/favicon.svg',
+  './assets/fonts/bad-script-cyrillic.woff2',
 ];
 
 // Les fichiers de mots ne sont pas listés en dur ici : on lit words/index.json (la même

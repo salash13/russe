@@ -34,13 +34,14 @@ export async function loadContent() {
   const pairsById = new Map(pairs.map((p) => [p.id, p]));
   cache = { letters, lots, rules, words, pairs, lettersById, wordsById, pairsById };
 
-  // Une carte "letter:<id>:son" ou "letter:<id>:lettre" ne peut être présentée que si la
-  // lettre existe encore dans le contenu chargé (§4.3 : toute carte planifiée doit pouvoir
-  // être présentée). La facette "lettre" (entendre le son, deviner la lettre) n'a pas de
-  // sens pour Ь/Ъ, qui n'ont aucun son propre ("(muet)") : forcer la synthèse vocale à lire
-  // le caractère seul produit un charabia sans rapport avec la lettre.
+  // Une carte "letter:<id>:son", "letter:<id>:lettre" ou "letter:<id>:cursive" (exercice 5,
+  // reconnaître la cursive) ne peut être présentée que si la lettre existe encore dans le
+  // contenu chargé (§4.3 : toute carte planifiée doit pouvoir être présentée). La facette
+  // "lettre" (entendre le son, deviner la lettre) n'a pas de sens pour Ь/Ъ, qui n'ont aucun
+  // son propre ("(muet)") : forcer la synthèse vocale à lire le caractère seul produit un
+  // charabia sans rapport avec la lettre.
   registerCardType('letter', {
-    facets: ['son', 'lettre'],
+    facets: ['son', 'lettre', 'cursive', 'trace'],
     canPresent: (parsed) => {
       const letter = lettersById.get(parsed.elementId);
       if (!letter) return false;

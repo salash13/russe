@@ -3,7 +3,26 @@
  * Mode sombre qui suit le système (§4.5) ; cibles tactiles ≥ 44px (§4.5) ; aucune
  * information portée uniquement par la couleur (les boutons portent aussi un symbole
  * ✔/✖ ou un texte, jamais seulement une teinte).
+ *
+ * Police "Bad Script" (assets/fonts/, licence OFL) pour la classe .cursive : la seule police
+ * cyrillique manuscrite libre trouvée qui couvre les 33 lettres. Ce n'est PAS la vraie
+ * écriture scolaire russe (пропись) — aucune police fiable de ce type n'a été trouvée. Elle
+ * sert seulement à montrer que l'écriture manuscrite change de forme (exercice 5), jamais
+ * comme référence exacte du tracé (voir l'avertissement affiché avec, §8 du document).
  */
+
+@font-face {
+  font-family: 'Bad Script';
+  font-style: normal;
+  font-weight: 400;
+  src: url('../../assets/fonts/bad-script-cyrillic.woff2') format('woff2');
+  font-display: swap;
+}
+
+.cursive {
+  font-family: 'Bad Script', cursive;
+  font-weight: 400;
+}
 
 :root {
   --bg: #f7f7fb;
@@ -131,6 +150,11 @@ h1 {
   font-size: 4rem;
   margin: 0;
   font-weight: 600;
+}
+
+.prompt-letter.cursive {
+  font-size: 2.75rem;
+  color: var(--primary);
 }
 
 .question-text {

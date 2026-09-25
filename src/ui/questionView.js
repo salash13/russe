@@ -24,7 +24,12 @@ export function questionScreenHtml(question, { progressLabel, act }) {
       ${
         question.audioText
           ? `<button type="button" class="btn-audio" data-act="play-audio" aria-label="Écouter">🔊</button>`
-          : `<p class="prompt-letter" lang="ru">${h(question.prompt)}</p>`
+          : `<p class="prompt-letter${question.promptClass ? ` ${h(question.promptClass)}` : ''}" lang="ru">${h(question.prompt)}</p>`
+      }
+      ${
+        question.promptClass === 'cursive'
+          ? `<p class="audio-warning">✎ Police décorative approximative, pas la vraie écriture scolaire russe.</p>`
+          : ''
       }
       ${
         silentDevice

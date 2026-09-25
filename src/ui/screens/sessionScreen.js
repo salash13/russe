@@ -13,6 +13,7 @@ import {
   buildAccentQuestion,
   buildReadAloudQuestion,
   buildPairQuestion,
+  buildTraceQuestion,
 } from '../exercises.js';
 import { questionScreenHtml } from '../questionView.js';
 import { keyboardHtml } from '../keyboard.js';
@@ -79,6 +80,8 @@ function renderLetterDiscovery(app, elementId) {
   document.getElementById('app').innerHTML = `
     <section class="screen screen-discovery" aria-live="polite">
       <p class="prompt-letter" lang="ru">${h(letter.print)} ${h(letter.lower)}</p>
+      <p class="prompt-letter cursive" lang="ru">${h(letter.print)} ${h(letter.lower)}</p>
+      <p class="audio-warning">✎ Cursive : police décorative approximative, pas la vraie écriture scolaire russe.</p>
       <p class="letter-sound">« ${h(letter.sound)} » — ${h(letter.hint)}</p>
       ${letter.falseFriend ? `<p class="letter-warning">⚠️ ${h(letter.falseFriend)}</p>` : ''}
       <button type="button" class="btn-audio" data-act="play-audio" aria-label="Écouter">🔊</button>
@@ -142,6 +145,15 @@ function renderQuestion(app, id) {
   const { type, elementId, facet } = parseCardId(id);
   const position = app.runtime.queue.total - app.runtime.queue.remaining + 1;
   const progressLabel = `${position} / ${app.runtime.queue.total}`;
+
+  if (type === 'letter' && facet === 'trace') {
+    const letter = app.content.lettersById.get(elementId);
+    const question = buildTraceQuestion(letter);
+    app.runtime.currentQuestion = question;
+    app.runtime.audioText = null; // exercice visuel : rien à écouter
+    renderTraceScreen(question, progressLabel);
+    return;
+  }
 
   if (type === 'pair') {
     const pair = app.content.pairsById.get(elementId);
@@ -231,6 +243,25 @@ export function onReadAloudReveal(app) {
   speak(question.audioText);
   app.runtime.pendingCorrect = null;
   renderFeedback(app, null, question);
+}
+
+/** Exercice 6 (§4.2) : tracer une lettre en cursive avec le doigt, puis vérifier (auto-évalué). */
+function renderTraceScreen(question, progressLabel) {
+  document.getElementById('app').innerHTML = `
+    <section class="screen screen-question" aria-live="polite">
+      <p class="session-progress">${h(progressLabel)}</p>
+      <p class="prompt-letter cursive" lang="ru">${h(question.displayLetter)}</p>
+      <p class="audio-warning">✎ Police décorative approximative, pas la vraie écriture scolaire russe.</p>
+      <p class="question-text">${h(question.label)}</p>
+      <button type="button" class="btn-primary" data-act="reveal-trace">Vérifier</button>
+    </section>
+  `;
+}
+
+/** Auto-évaluation de l'exercice 6, même principe que l'exercice 3 (onReadAloudReveal). */
+export function onTraceReveal(app) {
+  app.runtime.pendingCorrect = null;
+  renderFeedback(app, null, app.runtime.currentQuestion);
 }
 
 /** Exercice 7 (§4.2) : écouter, taper au clavier cyrillique à l'écran, valider. */

@@ -54,6 +54,21 @@ export function buildQuestion(letter, facet, allLetters) {
     };
   }
 
+  if (facet === 'cursive') {
+    // Exercice 5 : reconnaître la cursive. Police décorative approximative (voir l'avertissement
+    // affiché avec, app.css) — l'app ne prétend jamais que c'est la vraie écriture scolaire.
+    const options = shuffle([letter, ...distractors]);
+    return {
+      kind: 'cursive',
+      prompt: `${letter.print} ${letter.lower}`,
+      promptClass: 'cursive',
+      label: 'Quelle lettre imprimée est-ce ?',
+      correctId: letter.id,
+      explanation: explanationFor(letter),
+      choices: options.map((l) => ({ id: l.id, label: `${l.print} ${l.lower}`, lang: 'ru' })),
+    };
+  }
+
   // facet === 'lettre' : on entend le son, on choisit la lettre correspondante.
   // audioText utilise la MINUSCULE, jamais la majuscule (voir la note en tête de fichier :
   // une majuscule isolée fait dire à la synthèse vocale « lettre majuscule X » en entier).
@@ -80,6 +95,22 @@ export function buildWordListening(word) {
     label: 'Écoute et tape le mot que tu entends',
     expected: word.ru,
     explanation: `${word.ru} — ${word.fr}`,
+  };
+}
+
+/**
+ * Exercice 6 (§4.2) : tracer une lettre en cursive avec le doigt. Auto-évalué, comme
+ * l'exercice 3 : sans données de référence fiables sur le tracé exact (§8 du document —
+ * aucune police fiable trouvée, voir app.css), l'app ne peut pas juger un tracé, seulement
+ * montrer une forme approximative et laisser l'utilisateur s'auto-évaluer.
+ * @param {object} letter - une entrée de content/letters.json
+ */
+export function buildTraceQuestion(letter) {
+  return {
+    kind: 'trace',
+    displayLetter: `${letter.print} ${letter.lower}`,
+    label: 'Trace cette lettre avec ton doigt, puis vérifie',
+    explanation: `${letter.print} ${letter.lower} — ${letter.hint}`,
   };
 }
 
