@@ -7,11 +7,17 @@
 // revient avant la fin de la séance (comportement de core/session.js#createSessionQueue).
 
 import { h } from '../dom.js';
-import { buildQuestion, buildWordListening, buildAccentQuestion, buildReadAloudQuestion } from '../exercises.js';
+import {
+  buildQuestion,
+  buildWordListening,
+  buildAccentQuestion,
+  buildReadAloudQuestion,
+  buildPairQuestion,
+} from '../exercises.js';
 import { questionScreenHtml } from '../questionView.js';
 import { keyboardHtml } from '../keyboard.js';
 import { speak, hasRussianVoice } from '../audio.js';
-import { compareAnswer } from '../../core/text.js';
+import { compareAnswer, withStressMark } from '../../core/text.js';
 import { composeSession, createSessionQueue } from '../../core/session.js';
 import { createCard, reviewCard, nextInterval, RATING } from '../../core/srs.js';
 import { today, addDays, diffDays } from '../../core/dates.js';
@@ -59,6 +65,7 @@ function audioWarningHtml() {
 /** Fiche de découverte minimale (§2.2), avant d'être interrogé — une par type de contenu. */
 function renderDiscovery(app, id) {
   const { type, elementId } = parseCardId(id);
+  if (type === 'pair') return renderPairDiscovery(app, elementId);
   if (type === 'word') return renderWordDiscovery(app, elementId);
   return renderLetterDiscovery(app, elementId);
 }
@@ -98,6 +105,34 @@ function renderWordDiscovery(app, elementId) {
   speak(word.ru);
 }
 
+/** Fiche de découverte de l'exercice 8 (§4.2) : les deux mots de la paire, côte à côte. */
+function renderPairDiscovery(app, elementId) {
+  const pair = app.content.pairsById.get(elementId);
+  const wordA = app.content.wordsById.get(pair.wordA);
+  const wordB = app.content.wordsById.get(pair.wordB);
+  app.runtime.audioText = wordA.ru; // pour Espace/🔊 : au moins un des deux à rejouer
+
+  document.getElementById('app').innerHTML = `
+    <section class="screen screen-discovery" aria-live="polite">
+      <p class="question-text">Deux mots qui se ressemblent — écoute la différence</p>
+      <div class="pair-words">
+        ${[wordA, wordB]
+          .map(
+            (w) => `
+          <button type="button" class="pair-word" data-act="play-word" data-text="${h(w.ru)}" lang="ru">
+            <span class="pair-word-ru">${h(withStressMark(w.ru, w.stress))}</span>
+            <span class="pair-word-fr">${h(w.fr)}</span>
+          </button>`
+          )
+          .join('')}
+      </div>
+      <p class="letter-sound">${h(pair.note)}</p>
+      ${audioWarningHtml()}
+      <button type="button" class="btn-primary" data-act="reveal">Je suis prêt</button>
+    </section>
+  `;
+}
+
 export function onSessionReveal(app) {
   app.runtime.discovered.add(app.runtime.currentCardId);
   renderQuestion(app, app.runtime.currentCardId);
@@ -107,6 +142,16 @@ function renderQuestion(app, id) {
   const { type, elementId, facet } = parseCardId(id);
   const position = app.runtime.queue.total - app.runtime.queue.remaining + 1;
   const progressLabel = `${position} / ${app.runtime.queue.total}`;
+
+  if (type === 'pair') {
+    const pair = app.content.pairsById.get(elementId);
+    const question = buildPairQuestion(pair, app.content.wordsById);
+    app.runtime.currentQuestion = question;
+    app.runtime.audioText = question.audioText;
+    document.getElementById('app').innerHTML = questionScreenHtml(question, { progressLabel, act: 'answer' });
+    speak(question.audioText);
+    return;
+  }
 
   if (type === 'word' && facet === 'accent') {
     const word = app.content.wordsById.get(elementId);
@@ -303,6 +348,12 @@ export function onSessionRate(app, rating) {
 /** Rejoue l'audio de la question ou de la fiche de découverte en cours. */
 export function replayCurrentAudio(app) {
   if (app.runtime.audioText) speak(app.runtime.audioText);
+}
+
+/** Joue un mot précis (fiche de découverte de l'exercice 8 : les deux mots d'une paire). */
+export function onPlayWord(app, text) {
+  app.runtime.audioText = text; // pour que Espace/🔊 rejoue ce même mot ensuite
+  speak(text);
 }
 
 function finishSession(app) {

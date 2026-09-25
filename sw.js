@@ -32,6 +32,7 @@ const PRECACHE_URLS = [
   './content/letters.json',
   './content/lots.json',
   './content/rules.json',
+  './content/pairs.json',
   './content/words/index.json',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',

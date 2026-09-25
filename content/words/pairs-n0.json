@@ -1,0 +1,38 @@
+[
+  {
+    "id": "brat", "ru": "брат", "stress": 1,
+    "fr": "frère", "pos": "nom", "gender": "m",
+    "pron": "BRAT",
+    "forms": {},
+    "unit": "n0-pairs", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "", "date": "", "ok": false }
+  },
+  {
+    "id": "brat-verbe", "ru": "брать", "stress": 1,
+    "fr": "prendre", "pos": "verbe",
+    "pron": "BRAT'",
+    "forms": {},
+    "unit": "n0-pairs", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "", "date": "", "ok": false }
+  },
+  {
+    "id": "zamok-chateau", "ru": "замок", "stress": 1,
+    "fr": "château", "pos": "nom", "gender": "m",
+    "pron": "ZA-mak",
+    "forms": {},
+    "unit": "n0-pairs", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "", "date": "", "ok": false }
+  },
+  {
+    "id": "zamok-serrure", "ru": "замок", "stress": 2,
+    "fr": "serrure", "pos": "nom", "gender": "m",
+    "pron": "za-MOK",
+    "forms": {},
+    "unit": "n0-pairs", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "", "date": "", "ok": false }
+  }
+]

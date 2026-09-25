@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { checkLetters, checkLots, lotCoverage, checkRules, checkWords, countSyllables } from '../scripts/validate-content.mjs';
+import { checkLetters, checkLots, lotCoverage, checkRules, checkWords, checkPairs, countSyllables } from '../scripts/validate-content.mjs';
 
 function reviewed(overrides = {}) {
   return { by: '', date: '', ok: false, ...overrides };
@@ -17,6 +17,14 @@ function rule(overrides = {}) {
 function word(overrides = {}) {
   return {
     id: 'mama', ru: 'мама', fr: 'maman', stress: 1, gender: 'f', pos: 'nom',
+    reviewed: reviewed(),
+    ...overrides,
+  };
+}
+
+function pair(overrides = {}) {
+  return {
+    id: 'brat-brat', wordA: 'brat', wordB: 'brat-verbe', note: 'ь final',
     reviewed: reviewed(),
     ...overrides,
   };
@@ -185,10 +193,49 @@ test('checkWords : rejette un tableau absent', () => {
   assert.deepEqual(checkWords({ pas: 'un tableau' }, 'x.json'), ['x.json doit contenir un tableau.']);
 });
 
+test('checkPairs : aucune erreur pour une paire bien formée référençant des mots existants', () => {
+  const wordIds = new Set(['brat', 'brat-verbe']);
+  assert.deepEqual(checkPairs([pair()], wordIds), []);
+});
+
+test('checkPairs : signale une référence à un mot inexistant', () => {
+  const errors = checkPairs([pair({ wordA: 'fantome' })], new Set(['brat-verbe']));
+  assert.ok(errors.some((e) => e.includes('"wordA"') && e.includes('fantome')));
+});
+
+test('checkPairs : signale wordA identique à wordB', () => {
+  const errors = checkPairs([pair({ wordA: 'brat', wordB: 'brat' })], new Set(['brat']));
+  assert.ok(errors.some((e) => e.includes('identiques')));
+});
+
+test('checkPairs : signale une note manquante et un id dupliqué', () => {
+  const noNote = checkPairs([pair({ note: undefined })], new Set(['brat', 'brat-verbe']));
+  assert.ok(noNote.some((e) => e.includes('"note"')));
+
+  const dupId = checkPairs(
+    [pair({ id: 'p1' }), pair({ id: 'p1', wordA: 'zamok-chateau', wordB: 'zamok-serrure' })],
+    new Set(['brat', 'brat-verbe', 'zamok-chateau', 'zamok-serrure'])
+  );
+  assert.ok(dupId.some((e) => e.includes('Identifiant de paire dupliqué')));
+});
+
+test('checkPairs : rejette un tableau absent', () => {
+  assert.deepEqual(checkPairs({ pas: 'un tableau' }), ['pairs.json doit contenir un tableau.']);
+});
+
 test('le vrai content/rules.json et content/words/*.json sont valides', async () => {
   const { readContentJson } = await import('../scripts/validate-content.mjs');
   const rules = await readContentJson('rules.json');
   assert.deepEqual(checkRules(rules), []);
   const words = await readContentJson('words/n0-lecture.json');
   assert.deepEqual(checkWords(words, 'words/n0-lecture.json'), []);
+});
+
+test('le vrai content/pairs.json est valide et référence des mots existants', async () => {
+  const { readContentJson } = await import('../scripts/validate-content.mjs');
+  const pairs = await readContentJson('pairs.json');
+  const lecture = await readContentJson('words/n0-lecture.json');
+  const pairsWords = await readContentJson('words/pairs-n0.json');
+  const wordIds = new Set([...lecture, ...pairsWords].map((w) => w.id));
+  assert.deepEqual(checkPairs(pairs, wordIds), []);
 });

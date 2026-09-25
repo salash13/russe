@@ -7,7 +7,7 @@
 
 import { createStorage } from '../core/storage.js';
 import { today } from '../core/dates.js';
-import { loadContent, seedWordCards } from './content.js';
+import { loadContent, seedWordCards, seedPairCards } from './content.js';
 import { primeVoices } from './audio.js';
 import { insertChar, backspace } from './keyboard.js';
 import { renderHome } from './screens/home.js';
@@ -22,6 +22,7 @@ import {
   onSessionRate,
   onSessionReveal,
   replayCurrentAudio,
+  onPlayWord,
 } from './screens/sessionScreen.js';
 
 const backend = {
@@ -70,8 +71,9 @@ async function boot() {
   // Chaque mot relu (§5.5 : reviewed.ok) qui n'a pas encore de carte en obtient une, neuve,
   // due aujourd'hui — c'est ce qui le fait entrer dans le cycle normal de séance. Un mot non
   // relu n'obtient jamais de carte : il reste invisible.
-  const added = seedWordCards(app.progress.state.cards, app.content.words, today());
-  if (added > 0) app.storage.save(app.progress.state);
+  const addedWords = seedWordCards(app.progress.state.cards, app.content.words, today());
+  const addedPairs = seedPairCards(app.progress.state.cards, app.content.pairs, app.content.wordsById, today());
+  if (addedWords > 0 || addedPairs > 0) app.storage.save(app.progress.state);
 
   renderHome(app);
 }
@@ -116,6 +118,9 @@ document.addEventListener('click', (event) => {
       break;
     case 'play-audio':
       replayCurrentAudio(app);
+      break;
+    case 'play-word':
+      onPlayWord(app, el.dataset.text);
       break;
     case 'go-home':
       renderHome(app);

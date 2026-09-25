@@ -257,6 +257,44 @@ export function checkWords(words, fileLabel = 'words.json') {
 }
 
 /**
+ * Vérifie content/pairs.json (exercice 8, §4.2 : paires minimales audio) : chaque paire
+ * référence deux mots (wordA, wordB) qui doivent exister dans content/words/*.json, et une
+ * note (l'explication de ce qui distingue les deux). reviewed suit la même règle (§5.5) —
+ * appliquée aussi au niveau du SRS dans content.js, pas seulement ici.
+ * @returns {string[]}
+ */
+export function checkPairs(pairs, wordIds = new Set()) {
+  if (!Array.isArray(pairs)) return ['pairs.json doit contenir un tableau.'];
+
+  const errors = [];
+  const ids = new Set();
+
+  for (const pair of pairs) {
+    const label = `pairs.json / "${pair?.id ?? '(sans id)'}"`;
+    if (!pair?.id) errors.push(`${label} : champ "id" manquant.`);
+    else if (ids.has(pair.id)) errors.push(`Identifiant de paire dupliqué : "${pair.id}".`);
+    ids.add(pair?.id);
+
+    if (!pair?.wordA) errors.push(`${label} : champ "wordA" manquant.`);
+    else if (wordIds.size > 0 && !wordIds.has(pair.wordA)) {
+      errors.push(`${label} : "wordA" ("${pair.wordA}") ne correspond à aucun mot de content/words/.`);
+    }
+    if (!pair?.wordB) errors.push(`${label} : champ "wordB" manquant.`);
+    else if (wordIds.size > 0 && !wordIds.has(pair.wordB)) {
+      errors.push(`${label} : "wordB" ("${pair.wordB}") ne correspond à aucun mot de content/words/.`);
+    }
+    if (pair?.wordA && pair?.wordB && pair.wordA === pair.wordB) {
+      errors.push(`${label} : "wordA" et "wordB" sont identiques — une paire minimale doit distinguer deux mots.`);
+    }
+    if (!pair?.note) errors.push(`${label} : champ "note" manquant (ce qui distingue les deux mots).`);
+
+    errors.push(...checkReviewedShape(pair?.reviewed, label));
+  }
+
+  return errors;
+}
+
+/**
  * L'app (navigateur) ne peut pas lister un dossier : elle lit `words/index.json` pour
  * savoir quels fichiers charger. On vérifie ici qu'il ne peut jamais partir en désaccord
  * avec ce qui existe réellement sur disque (§6.2 : jamais deux sources de vérité).
@@ -352,6 +390,14 @@ async function main() {
     }
   }
 
+  let pairs = null;
+  try {
+    pairs = await readContentJson('pairs.json');
+    errors.push(...checkPairs(pairs, new Set(seenWordIds.keys())));
+  } catch (e) {
+    errors.push(e.message);
+  }
+
   if (errors.length === 0) {
     console.log(`✔ Contenu valide : ${letters.length} lettres réparties en ${lots.length} lots, ${rules.length} règles de lecture.`);
     for (const lot of lotCoverage(lots)) {
@@ -359,6 +405,8 @@ async function main() {
     }
     const reviewedCount = allWords.filter((w) => w.reviewed?.ok === true).length;
     console.log(`  - Mots : ${allWords.length} au total dans ${wordFiles.length} fichier(s), ${reviewedCount} relu(s) et visible(s), ${allWords.length - reviewedCount} en attente de relecture.`);
+    const pairsReviewed = pairs.filter((p) => p.reviewed?.ok === true).length;
+    console.log(`  - Paires minimales : ${pairs.length} au total, ${pairsReviewed} relue(s) et visible(s).`);
     process.exit(0);
   } else {
     console.error(`✖ ${errors.length} erreur(s) de contenu :`);

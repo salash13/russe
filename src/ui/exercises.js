@@ -5,6 +5,7 @@
 //   3 (lire à voix haute puis vérifier), pour un mot
 //   4 (où est l'accent ?), pour un mot
 //   7 (taper le mot entendu), pour un mot
+//   8 (paires minimales audio), pour une paire
 //
 // Piège trouvé en diagnostiquant avec Ben (25/09/2026, mesuré via `say` : ~1,3s contre
 // ~0,3s) : demander à la synthèse vocale de lire une lettre MAJUSCULE isolée la fait épeler
@@ -95,6 +96,31 @@ export function buildReadAloudQuestion(word) {
     audioText: word.ru,
     label: 'Lis ce mot à voix haute, puis vérifie',
     explanation: `${word.ru} — ${word.fr}`,
+  };
+}
+
+/**
+ * Exercice 8 (§4.2) : paires minimales audio (брат/брать, за́мок/замо́к). L'un des deux mots
+ * est tiré au hasard et joué ; les deux choix affichent l'accent (§2.7) pour rester
+ * distinguables même quand l'orthographe est identique (за́мок/замо́к).
+ * @param {object} pair - une entrée de content/pairs.json
+ * @param {Map<string, object>} wordsById
+ */
+export function buildPairQuestion(pair, wordsById) {
+  const wordA = wordsById.get(pair.wordA);
+  const wordB = wordsById.get(pair.wordB);
+  const played = Math.random() < 0.5 ? wordA : wordB;
+  return {
+    kind: 'pair',
+    audioText: played.ru,
+    label: 'Lequel des deux entends-tu ?',
+    correctId: played.id,
+    explanation: `${withStressMark(wordA.ru, wordA.stress)} (${wordA.fr}) / ${withStressMark(wordB.ru, wordB.stress)} (${wordB.fr}) — ${pair.note}`,
+    choices: shuffle([wordA, wordB]).map((w) => ({
+      id: w.id,
+      label: withStressMark(w.ru, w.stress),
+      lang: 'ru',
+    })),
   };
 }
 

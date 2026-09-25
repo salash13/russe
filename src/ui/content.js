@@ -9,17 +9,18 @@ import { splitSyllables } from '../core/text.js';
 let cache = null;
 
 /**
- * Charge (une seule fois) letters.json, lots.json, rules.json et tous les fichiers de
- * content/words/ (listés dans words/index.json — le navigateur ne peut pas lister un
- * dossier lui-même), et enregistre les types de carte "letter" et "word".
+ * Charge (une seule fois) letters.json, lots.json, rules.json, pairs.json et tous les
+ * fichiers de content/words/ (listés dans words/index.json — le navigateur ne peut pas
+ * lister un dossier lui-même), et enregistre les types de carte "letter", "word" et "pair".
  */
 export async function loadContent() {
   if (cache) return cache;
 
-  const [letters, lots, rules, wordIndex] = await Promise.all([
+  const [letters, lots, rules, pairs, wordIndex] = await Promise.all([
     fetch('content/letters.json').then((r) => r.json()),
     fetch('content/lots.json').then((r) => r.json()),
     fetch('content/rules.json').then((r) => r.json()),
+    fetch('content/pairs.json').then((r) => r.json()),
     fetch('content/words/index.json').then((r) => r.json()),
   ]);
 
@@ -30,7 +31,8 @@ export async function loadContent() {
 
   const lettersById = new Map(letters.map((l) => [l.id, l]));
   const wordsById = new Map(words.map((w) => [w.id, w]));
-  cache = { letters, lots, rules, words, lettersById, wordsById };
+  const pairsById = new Map(pairs.map((p) => [p.id, p]));
+  cache = { letters, lots, rules, words, pairs, lettersById, wordsById, pairsById };
 
   // Une carte "letter:<id>:son" ou "letter:<id>:lettre" ne peut être présentée que si la
   // lettre existe encore dans le contenu chargé (§4.3 : toute carte planifiée doit pouvoir
@@ -63,7 +65,41 @@ export async function loadContent() {
     },
   });
 
+  // Une carte "pair:<id>" (exercice 8, §4.2 : paires minimales audio) ne peut être présentée
+  // que si la paire ET ses deux mots ont été relus (§2.9, §5.5). Une paire dont un seul des
+  // deux mots serait relu resterait ambiguë (on ne peut pas faire deviner "lequel des deux
+  // tu entends" si l'app elle-même n'est sûre que d'un des deux).
+  registerCardType('pair', {
+    canPresent: (parsed) => {
+      const pair = pairsById.get(parsed.elementId);
+      if (!pair || pair.reviewed?.ok !== true) return false;
+      const wordA = wordsById.get(pair.wordA);
+      const wordB = wordsById.get(pair.wordB);
+      return wordA?.reviewed?.ok === true && wordB?.reviewed?.ok === true;
+    },
+  });
+
   return cache;
+}
+
+/**
+ * Ajoute une carte neuve (due aujourd'hui) pour chaque paire relue (elle et ses deux mots)
+ * qui n'a pas encore de carte.
+ * @returns {number} le nombre de cartes ajoutées
+ */
+export function seedPairCards(cardsState, pairs, wordsById, todayKey) {
+  let added = 0;
+  for (const pair of pairs) {
+    if (pair.reviewed?.ok !== true) continue;
+    const wordA = wordsById.get(pair.wordA);
+    const wordB = wordsById.get(pair.wordB);
+    if (wordA?.reviewed?.ok !== true || wordB?.reviewed?.ok !== true) continue;
+    const id = makeCardId('pair', pair.id);
+    if (cardsState[id]) continue;
+    cardsState[id] = { difficulty: 5, stability: 0.5, reps: 0, lapses: 0, due: todayKey };
+    added++;
+  }
+  return added;
 }
 
 /**
