@@ -7,7 +7,7 @@
 // revient avant la fin de la séance (comportement de core/session.js#createSessionQueue).
 
 import { h } from '../dom.js';
-import { buildQuestion, buildWordListening, buildAccentQuestion } from '../exercises.js';
+import { buildQuestion, buildWordListening, buildAccentQuestion, buildReadAloudQuestion } from '../exercises.js';
 import { questionScreenHtml } from '../questionView.js';
 import { keyboardHtml } from '../keyboard.js';
 import { speak, hasRussianVoice } from '../audio.js';
@@ -115,6 +115,15 @@ function renderQuestion(app, id) {
     return;
   }
 
+  if (type === 'word' && facet === 'lecture') {
+    const word = app.content.wordsById.get(elementId);
+    const question = buildReadAloudQuestion(word);
+    app.runtime.currentQuestion = question;
+    app.runtime.audioText = question.audioText;
+    renderReadAloudScreen(question, progressLabel);
+    return;
+  }
+
   if (type === 'word') {
     const word = app.content.wordsById.get(elementId);
     const question = buildWordListening(word);
@@ -151,6 +160,30 @@ function renderAccentScreen(question, progressLabel) {
       </div>
     </section>
   `;
+}
+
+/** Exercice 3 (§4.2) : lire à voix haute, accent affiché (§2.7), puis vérifier avec l'audio. */
+function renderReadAloudScreen(question, progressLabel) {
+  document.getElementById('app').innerHTML = `
+    <section class="screen screen-question" aria-live="polite">
+      <p class="session-progress">${h(progressLabel)}</p>
+      <p class="prompt-letter" lang="ru">${h(question.displayRu)}</p>
+      <p class="question-text">${h(question.label)}</p>
+      <button type="button" class="btn-primary" data-act="reveal-read">🔊 Vérifier</button>
+      ${audioWarningHtml()}
+    </section>
+  `;
+}
+
+/**
+ * Joue l'audio et enchaîne directement sur la note (§4.3) : l'app ne peut pas juger la
+ * prononciation, seule la note choisie ensuite compte comme résultat (auto-évaluation).
+ */
+export function onReadAloudReveal(app) {
+  const question = app.runtime.currentQuestion;
+  speak(question.audioText);
+  app.runtime.pendingCorrect = null;
+  renderFeedback(app, null, question);
 }
 
 /** Exercice 7 (§4.2) : écouter, taper au clavier cyrillique à l'écran, valider. */
@@ -199,23 +232,35 @@ const RATING_LABELS = [
   [RATING.EASY, 'Facile'],
 ];
 
-/** Le feedback explique la règle (§2.4), et une note est suggérée selon la justesse (§4.3). */
+/**
+ * Le feedback explique la règle (§2.4), et une note est suggérée selon la justesse (§4.3).
+ * `correct` vaut `null` pour un exercice auto-évalué (lecture à voix haute, §4.2 exercice 3) :
+ * l'app ne peut pas juger, alors elle ne prétend pas — pas de ✔/✖, la note choisie décide.
+ */
 function renderFeedback(app, correct, question, result = null) {
-  const suggested = correct ? RATING.GOOD : RATING.AGAIN;
+  const suggested = correct === false ? RATING.AGAIN : RATING.GOOD;
   let statusLine;
-  if (correct) {
+  let toneClass;
+  if (correct === null) {
+    statusLine = `${question.explanation} Comment ça s'est passé ?`;
+    toneClass = 'feedback-neutral';
+  } else if (correct) {
     statusLine = `✔ Bien joué. ${question.explanation}`;
+    toneClass = 'feedback-ok';
   } else if (question.expected && result?.close) {
     statusLine = `✎ Presque : la bonne réponse est « ${question.expected} ». ${question.explanation}`;
+    toneClass = 'feedback-ko';
   } else if (question.expected) {
     statusLine = `✖ Pas tout à fait : la bonne réponse est « ${question.expected} ». ${question.explanation}`;
+    toneClass = 'feedback-ko';
   } else {
     statusLine = `✖ Pas tout à fait. ${question.explanation}`;
+    toneClass = 'feedback-ko';
   }
 
   document.getElementById('app').innerHTML = `
     <section class="screen screen-feedback" role="status" aria-live="polite">
-      <p class="feedback ${correct ? 'feedback-ok' : 'feedback-ko'}">${h(statusLine)}</p>
+      <p class="feedback ${toneClass}">${h(statusLine)}</p>
       <div class="choices" role="group" aria-label="Note">
         ${RATING_LABELS.map(
           ([value, label]) => `
@@ -244,7 +289,9 @@ export function onSessionRate(app, rating) {
   app.progress.state.cards[id] = updated;
   app.storage.save(app.progress.state);
 
-  const correct = app.runtime.pendingCorrect;
+  // Auto-évaluation (lecture à voix haute, §4.2 exercice 3) : pendingCorrect est null, donc
+  // c'est la note elle-même qui décide de ce qui compte comme réussi pour le récapitulatif.
+  const correct = app.runtime.pendingCorrect ?? rating >= RATING.GOOD;
   app.runtime.results[correct ? 'correct' : 'wrong']++;
   app.runtime.queue.answer(id, correct);
 

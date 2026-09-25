@@ -5,10 +5,30 @@
 // seule lettre est signalée « presque » plutôt que simplement fausse.
 
 const STRESS_MARK = '́'; // accent aigu combinant, utilisé pour marquer la syllabe tonique (напр. молоко́)
+const RUSSIAN_VOWELS = new Set(['а', 'е', 'ё', 'и', 'о', 'у', 'ы', 'э', 'ю', 'я']);
 
 /** Retire les marques d'accent tonique combinantes d'un texte russe accentué. */
 export function stripStress(text) {
   return text.normalize('NFC').replace(new RegExp(STRESS_MARK, 'g'), '');
+}
+
+/**
+ * Insère la marque d'accent tonique après la voyelle de la syllabe accentuée (§2.7 :
+ * l'accent est toujours stocké et affiché au début, ex. молоко́). `stress` est le numéro de
+ * la syllabe (= de la voyelle), en partant de 1, comme dans content/words/*.json.
+ */
+export function withStressMark(word, stress) {
+  const lower = word.toLowerCase();
+  let vowelCount = 0;
+  for (let i = 0; i < word.length; i++) {
+    if (RUSSIAN_VOWELS.has(lower[i])) {
+      vowelCount++;
+      if (vowelCount === stress) {
+        return word.slice(0, i + 1) + STRESS_MARK + word.slice(i + 1);
+      }
+    }
+  }
+  return word; // "stress" hors bornes : ne devrait pas arriver sur du contenu validé
 }
 
 /** Normalise une chaîne pour la comparaison : accent, ё/е, casse, espaces superflus. */
@@ -59,8 +79,6 @@ export function compareAnswer(input, expected) {
   const distance = levenshtein(a, b);
   return { correct: false, close: distance === 1, distance };
 }
-
-const RUSSIAN_VOWELS = new Set(['а', 'е', 'ё', 'и', 'о', 'у', 'ы', 'э', 'ю', 'я']);
 
 /**
  * Découpe un mot russe en syllabes, par la règle de l'attaque maximale (les consonnes entre

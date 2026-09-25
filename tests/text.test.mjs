@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { stripStress, normalize, levenshtein, compareAnswer, splitSyllables } from '../src/core/text.js';
+import { stripStress, normalize, levenshtein, compareAnswer, splitSyllables, withStressMark } from '../src/core/text.js';
 
 test('stripStress retire l\'accent aigu combinant', () => {
   assert.equal(stripStress('молоко́'), 'молоко');
@@ -65,5 +65,17 @@ test('splitSyllables : un mot sans voyelle (garde-fou) renvoie le mot entier', (
 test('splitSyllables : les syllabes mises bout à bout reforment le mot', () => {
   for (const word of ['мама', 'молоко', 'ресторан', 'такси', 'кофе', 'банан', 'кино', 'футбол']) {
     assert.equal(splitSyllables(word).join(''), word);
+  }
+});
+
+test('withStressMark : place l\'accent après la voyelle de la bonne syllabe', () => {
+  assert.equal(withStressMark('молоко', 3), 'молоко́');
+  assert.equal(withStressMark('мама', 1), 'ма́ма');
+  assert.equal(withStressMark('ресторан', 3), 'рестора́н');
+});
+
+test('withStressMark : stripStress annule withStressMark', () => {
+  for (const [word, stress] of [['мама', 1], ['ресторан', 3], ['такси', 2]]) {
+    assert.equal(stripStress(withStressMark(word, stress)), word);
   }
 });

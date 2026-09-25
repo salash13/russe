@@ -2,10 +2,11 @@
 //
 // Construit les questions des exercices du §4.2 :
 //   1 (lettre → son) et 2 (son → lettre), pour une lettre et une facette donnée
+//   3 (lire à voix haute puis vérifier), pour un mot
 //   4 (où est l'accent ?), pour un mot
 //   7 (taper le mot entendu), pour un mot
 
-import { splitSyllables } from '../core/text.js';
+import { splitSyllables, withStressMark } from '../core/text.js';
 
 function shuffle(array) {
   const copy = [...array];
@@ -69,6 +70,22 @@ export function buildWordListening(word) {
     audioText: word.ru,
     label: 'Écoute et tape le mot que tu entends',
     expected: word.ru,
+    explanation: `${word.ru} — ${word.fr}`,
+  };
+}
+
+/**
+ * Exercice 3 (§4.2) : lire un mot à voix haute (accent affiché, §2.7), puis vérifier avec
+ * l'audio. Auto-évalué : l'app ne peut pas juger la prononciation, c'est la note choisie
+ * ensuite (§4.3) qui compte comme résultat.
+ * @param {object} word - une entrée de content/words/*.json
+ */
+export function buildReadAloudQuestion(word) {
+  return {
+    kind: 'read',
+    displayRu: withStressMark(word.ru, word.stress),
+    audioText: word.ru,
+    label: 'Lis ce mot à voix haute, puis vérifie',
     explanation: `${word.ru} — ${word.fr}`,
   };
 }

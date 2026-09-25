@@ -17,6 +17,7 @@ import {
   onSessionAnswer,
   onSessionAccentAnswer,
   onSessionSubmitTyped,
+  onReadAloudReveal,
   onSessionRate,
   onSessionReveal,
   replayCurrentAudio,
@@ -102,6 +103,9 @@ document.addEventListener('click', (event) => {
       break;
     case 'submit-typed':
       onSessionSubmitTyped(app);
+      break;
+    case 'reveal-read':
+      onReadAloudReveal(app);
       break;
     case 'rate':
       onSessionRate(app, Number(el.dataset.rating));

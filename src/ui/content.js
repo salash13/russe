@@ -47,13 +47,14 @@ export async function loadContent() {
     },
   });
 
-  // Une carte "word:<id>:ecoute" (exercice 7, taper le mot entendu) ou "word:<id>:accent"
-  // (exercice 4, où est l'accent ?) ne peut être présentée que si le mot existe ET a été
-  // relu par un natif (§2.9, §5.5 : rien n'est publié sans relecture — appliqué ici au
-  // niveau du SRS, pas seulement à l'affichage). La facette "accent" n'a de sens que pour
-  // un mot d'au moins deux syllabes : sur une seule syllabe, la question n'en est pas une.
+  // Une carte "word:<id>:ecoute" (exercice 7, taper le mot entendu), "word:<id>:accent"
+  // (exercice 4, où est l'accent ?) ou "word:<id>:lecture" (exercice 3, lire à voix haute
+  // puis vérifier) ne peut être présentée que si le mot existe ET a été relu par un natif
+  // (§2.9, §5.5 : rien n'est publié sans relecture — appliqué ici au niveau du SRS, pas
+  // seulement à l'affichage). La facette "accent" n'a de sens que pour un mot d'au moins
+  // deux syllabes : sur une seule syllabe, la question n'en est pas une.
   registerCardType('word', {
-    facets: ['ecoute', 'accent'],
+    facets: ['ecoute', 'accent', 'lecture'],
     canPresent: (parsed) => {
       const word = wordsById.get(parsed.elementId);
       if (!word || word.reviewed?.ok !== true) return false;
@@ -75,7 +76,7 @@ export function seedWordCards(cardsState, words, todayKey) {
   let added = 0;
   for (const word of words) {
     if (word.reviewed?.ok !== true) continue;
-    const facets = splitSyllables(word.ru).length >= 2 ? ['ecoute', 'accent'] : ['ecoute'];
+    const facets = splitSyllables(word.ru).length >= 2 ? ['ecoute', 'accent', 'lecture'] : ['ecoute', 'lecture'];
     for (const facet of facets) {
       const id = makeCardId('word', word.id, facet);
       if (cardsState[id]) continue;
