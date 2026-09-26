@@ -6,7 +6,7 @@
     "forms": {},
     "unit": "n0-lecture", "freq": null,
     "audio": null,
-    "reviewed": { "by": "", "date": "", "ok": false }
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-09-26", "ok": true }
   },
   {
     "id": "metro", "ru": "метро", "stress": 2,
@@ -15,7 +15,7 @@
     "forms": {},
     "unit": "n0-lecture", "freq": null,
     "audio": null,
-    "reviewed": { "by": "", "date": "", "ok": false }
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-09-26", "ok": true }
   },
   {
     "id": "kofe", "ru": "кофе", "stress": 1,
@@ -24,7 +24,7 @@
     "forms": {},
     "unit": "n0-lecture", "freq": null,
     "audio": null,
-    "reviewed": { "by": "", "date": "", "ok": false }
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-09-26", "ok": true }
   },
   {
     "id": "mama", "ru": "мама", "stress": 1,
@@ -33,7 +33,7 @@
     "forms": {},
     "unit": "n0-lecture", "freq": null,
     "audio": null,
-    "reviewed": { "by": "", "date": "", "ok": false }
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-09-26", "ok": true }
   },
   {
     "id": "restoran", "ru": "ресторан", "stress": 3,
@@ -42,7 +42,7 @@
     "forms": {},
     "unit": "n0-lecture", "freq": null,
     "audio": null,
-    "reviewed": { "by": "", "date": "", "ok": false }
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-09-26", "ok": true }
   },
   {
     "id": "banan", "ru": "банан", "stress": 2,
@@ -51,7 +51,7 @@
     "forms": {},
     "unit": "n0-lecture", "freq": null,
     "audio": null,
-    "reviewed": { "by": "", "date": "", "ok": false }
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-09-26", "ok": true }
   },
   {
     "id": "kino", "ru": "кино", "stress": 2,
@@ -60,7 +60,7 @@
     "forms": {},
     "unit": "n0-lecture", "freq": null,
     "audio": null,
-    "reviewed": { "by": "", "date": "", "ok": false }
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-09-26", "ok": true }
   },
   {
     "id": "futbol", "ru": "футбол", "stress": 2,
@@ -69,6 +69,6 @@
     "forms": {},
     "unit": "n0-lecture", "freq": null,
     "audio": null,
-    "reviewed": { "by": "", "date": "", "ok": false }
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-09-26", "ok": true }
   }
 ]

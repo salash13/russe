@@ -6,7 +6,7 @@
     "forms": {},
     "unit": "n0-pairs", "freq": null,
     "audio": null,
-    "reviewed": { "by": "", "date": "", "ok": false }
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-09-26", "ok": true }
   },
   {
     "id": "brat-verbe", "ru": "брать", "stress": 1,
@@ -15,7 +15,7 @@
     "forms": {},
     "unit": "n0-pairs", "freq": null,
     "audio": null,
-    "reviewed": { "by": "", "date": "", "ok": false }
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-09-26", "ok": true }
   },
   {
     "id": "zamok-chateau", "ru": "замок", "stress": 1,
@@ -24,7 +24,7 @@
     "forms": {},
     "unit": "n0-pairs", "freq": null,
     "audio": null,
-    "reviewed": { "by": "", "date": "", "ok": false }
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-09-26", "ok": true }
   },
   {
     "id": "zamok-serrure", "ru": "замок", "stress": 2,
@@ -33,6 +33,6 @@
     "forms": {},
     "unit": "n0-pairs", "freq": null,
     "audio": null,
-    "reviewed": { "by": "", "date": "", "ok": false }
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-09-26", "ok": true }
   }
 ]

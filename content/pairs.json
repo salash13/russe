@@ -4,13 +4,13 @@
     "wordA": "brat",
     "wordB": "brat-verbe",
     "note": "брат (frère) se termine par une consonne dure ; брать (prendre) se termine par ь, un signe mou qui adoucit le т.",
-    "reviewed": { "by": "", "date": "", "ok": false }
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-09-26", "ok": true }
   },
   {
     "id": "zamok-zamok",
     "wordA": "zamok-chateau",
     "wordB": "zamok-serrure",
     "note": "même orthographe : seul l'accent change le sens — за́мок (château) contre замо́к (serrure).",
-    "reviewed": { "by": "", "date": "", "ok": false }
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-09-26", "ok": true }
   }
 ]
