@@ -38,8 +38,10 @@
   --radius: 14px;
 }
 
+/* Système (par défaut) : suit prefers-color-scheme, sauf si l'utilisateur force "clair"
+ * dans les réglages (data-theme="light" pose un choix explicite qui doit gagner). */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --bg: #121218;
     --surface: #1c1c26;
     --text: #f2f2f7;
@@ -53,12 +55,35 @@
   }
 }
 
+/* Forcé "sombre" dans les réglages (§4.5) : gagne quelle que soit la préférence système. */
+:root[data-theme='dark'] {
+  --bg: #121218;
+  --surface: #1c1c26;
+  --text: #f2f2f7;
+  --text-muted: #b0b0c0;
+  --primary: #6d8fd8;
+  --accent: #fca311;
+  --border: #33333f;
+  --ok: #4ade80;
+  --ko: #f87171;
+  --focus: #93c5fd;
+}
+
 * {
   box-sizing: border-box;
 }
 
 html {
   font-size: 100%;
+}
+
+/* Taille du texte réglable (§4.5, A−/A+) : agit sur rem, donc sur toute l'app d'un coup. */
+:root[data-text-size='large'] {
+  font-size: 112.5%;
+}
+
+:root[data-text-size='larger'] {
+  font-size: 125%;
 }
 
 body {
@@ -103,6 +128,13 @@ h1 {
   font-size: 0.95rem;
 }
 
+.home-links {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
 .btn-primary {
   min-height: 56px;
   padding: 0 32px;
@@ -128,6 +160,116 @@ h1 {
   color: var(--text-muted);
   text-decoration: underline;
   cursor: pointer;
+}
+
+.btn-secondary {
+  min-height: 48px;
+  width: 100%;
+  padding: 8px 16px;
+  font-size: 1rem;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.btn-secondary:hover {
+  border-color: var(--primary);
+}
+
+.btn-danger {
+  min-height: 48px;
+  width: 100%;
+  padding: 8px 16px;
+  font-size: 1rem;
+  border: 2px solid var(--ko);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ko);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.screen-settings {
+  align-items: stretch;
+  text-align: left;
+  gap: 10px;
+  padding-bottom: 32px;
+}
+
+.screen-settings h1 {
+  text-align: center;
+}
+
+.settings-heading {
+  margin: 16px 0 4px;
+  font-size: 1rem;
+  color: var(--text-muted);
+}
+
+.settings-danger-heading {
+  color: var(--ko);
+}
+
+.settings-row {
+  display: flex;
+  gap: 8px;
+}
+
+.setting-choice {
+  flex: 1;
+  min-height: 44px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.setting-choice-active {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: white;
+}
+
+.setting-toggle {
+  width: 100%;
+  min-height: 48px;
+  padding: 8px 16px;
+  text-align: left;
+  border: 2px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.setting-toggle-active {
+  border-color: var(--ok);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.settings-file-label {
+  display: block;
+  position: relative;
+  overflow: hidden;
+}
+
+.settings-file-label input[type='file'] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.settings-hint {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin: 0;
 }
 
 .btn-audio {

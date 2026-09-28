@@ -10,8 +10,11 @@ import { today } from '../core/dates.js';
 import { loadContent, seedWordCards, seedPairCards } from './content.js';
 import { primeVoices } from './audio.js';
 import { insertChar, backspace } from './keyboard.js';
+import { applyTheme } from './theme.js';
+import { downloadDailyReminder } from './reminder.js';
 import { renderHome } from './screens/home.js';
 import { renderRules } from './screens/rulesScreen.js';
+import { renderSettings } from './screens/settingsScreen.js';
 import { startPlacement, onPlacementAnswer, restartPlacement } from './screens/placementTest.js';
 import {
   startSession,
@@ -49,15 +52,24 @@ function renderCorrupted() {
   `;
 }
 
-function exportCorrupted() {
-  const raw = app.progress.raw ?? '';
-  const blob = new Blob([raw], { type: 'application/json' });
+function downloadJson(text, filename) {
+  const blob = new Blob([text], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `russe-sauvegarde-illisible-${Date.now()}.json`;
+  a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function exportCorrupted() {
+  downloadJson(app.progress.raw ?? '', `russe-sauvegarde-illisible-${Date.now()}.json`);
+}
+
+/** Bouton « Exporter ma progression » de l'écran Réglages (§6.7 : sync Mac ↔ téléphone). */
+function exportProgress() {
+  const raw = app.storage.exportRaw();
+  if (raw) downloadJson(raw, `russe-progression-${today()}.json`);
 }
 
 async function boot() {
@@ -67,6 +79,7 @@ async function boot() {
     renderCorrupted();
     return;
   }
+  applyTheme(app.progress.state.settings); // mode sombre/taille de texte, avant le premier rendu
   app.content = await loadContent();
 
   // Chaque mot relu (§5.5 : reviewed.ok) qui n'a pas encore de carte en obtient une, neuve,
@@ -132,8 +145,62 @@ document.addEventListener('click', (event) => {
     case 'show-rules':
       renderRules(app);
       break;
+    case 'show-settings':
+      renderSettings(app);
+      break;
     case 'export-corrupted':
       exportCorrupted();
+      break;
+    case 'set-goal':
+      app.progress.state.settings.goalMinutes = Number(el.dataset.value);
+      app.storage.save(app.progress.state);
+      renderSettings(app);
+      break;
+    case 'toggle-auto-audio':
+      app.progress.state.settings.autoAudio = app.progress.state.settings.autoAudio === false;
+      app.storage.save(app.progress.state);
+      renderSettings(app);
+      break;
+    case 'toggle-slow-audio':
+      app.progress.state.settings.slowAudio = app.progress.state.settings.slowAudio !== true;
+      app.storage.save(app.progress.state);
+      renderSettings(app);
+      break;
+    case 'toggle-show-stress':
+      app.progress.state.settings.showStress = app.progress.state.settings.showStress === 'never' ? 'always' : 'never';
+      app.storage.save(app.progress.state);
+      renderSettings(app);
+      break;
+    case 'set-theme':
+      app.progress.state.settings.theme = el.dataset.value;
+      app.storage.save(app.progress.state);
+      applyTheme(app.progress.state.settings);
+      renderSettings(app);
+      break;
+    case 'set-text-size':
+      app.progress.state.settings.textSize = el.dataset.value;
+      app.storage.save(app.progress.state);
+      applyTheme(app.progress.state.settings);
+      renderSettings(app);
+      break;
+    case 'download-reminder':
+      downloadDailyReminder();
+      break;
+    case 'export-progress':
+      app.storage.save(app.progress.state); // exporte l'état le plus frais, pas un état en retard
+      exportProgress();
+      break;
+    case 'reset-everything':
+      if (
+        window.confirm(
+          'Tout effacer ? Toute ta progression (lettres, mots, réglages, séries) sera définitivement perdue sur cet appareil. Une copie de secours est gardée, mais aucun bouton ne la restaure encore.'
+        )
+      ) {
+        const state = app.storage.reset();
+        app.progress = { state, corrupted: false, raw: null };
+        applyTheme(state.settings);
+        renderHome(app);
+      }
       break;
     case 'kbd-key': {
       const input = document.getElementById(el.dataset.target);
@@ -153,6 +220,29 @@ document.addEventListener('click', (event) => {
     default:
       break;
   }
+});
+
+// Import d'une sauvegarde (écran Réglages) : un <input type="file"> n'émet pas de "click"
+// utile pour data-act, mais un "change" quand un fichier est choisi — géré à part.
+document.addEventListener('change', (event) => {
+  const el = event.target.closest('[data-act-change="import-progress"]');
+  if (!el) return;
+  const file = el.files?.[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const result = app.storage.importState(String(reader.result));
+    if (result.ok) {
+      app.progress = { state: result.state, corrupted: false, raw: null };
+      applyTheme(app.progress.state.settings);
+      renderSettings(app, { importMessage: '✔ Import réussi.' });
+    } else {
+      const message = result.error === 'json' ? '✖ Fichier illisible (pas un JSON valide).' : '✖ Format non reconnu.';
+      renderSettings(app, { importMessage: message });
+    }
+  };
+  reader.readAsText(file);
 });
 
 // Clavier (§4.5) : 1-4 pour choisir, Espace pour rejouer l'audio, Entrée pour valider une

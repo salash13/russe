@@ -17,7 +17,7 @@ import {
 } from '../exercises.js';
 import { questionScreenHtml } from '../questionView.js';
 import { keyboardHtml } from '../keyboard.js';
-import { speak, hasRussianVoice } from '../audio.js';
+import { playAudio, hasRussianVoice } from '../audio.js';
 import { compareAnswer, withStressMark } from '../../core/text.js';
 import { composeSession, createSessionQueue } from '../../core/session.js';
 import { createCard, reviewCard, nextInterval, RATING } from '../../core/srs.js';
@@ -28,9 +28,14 @@ import { renderHome } from './home.js';
 const DEFAULT_SESSION_SIZE = 10;
 
 export function startSession(app) {
+  const settings = app.progress.state.settings;
+  // L'objectif quotidien (§4.1, §4.4 : 5/10/15 min) sert d'approximation directe de la
+  // taille de séance (~1 carte/minute) tant qu'on ne mesure pas vraiment le temps passé par
+  // carte ; sessionSize reste un réglage plus fin possible si besoin plus tard.
+  const size = settings.sessionSize ?? settings.goalMinutes ?? DEFAULT_SESSION_SIZE;
   const composed = composeSession(app.progress.state.cards, {
     today: today(),
-    size: app.progress.state.settings.sessionSize ?? DEFAULT_SESSION_SIZE,
+    size,
     content: app.content,
   });
   app.runtime.queue = createSessionQueue(composed.cardIds);
@@ -89,7 +94,7 @@ function renderLetterDiscovery(app, elementId) {
       <button type="button" class="btn-primary" data-act="reveal">Je suis prêt</button>
     </section>
   `;
-  speak(letter.lower);
+  playAudio(app.progress.state.settings, letter.lower);
 }
 
 function renderWordDiscovery(app, elementId) {
@@ -105,7 +110,7 @@ function renderWordDiscovery(app, elementId) {
       <button type="button" class="btn-primary" data-act="reveal">Je suis prêt</button>
     </section>
   `;
-  speak(word.ru);
+  playAudio(app.progress.state.settings, word.ru);
 }
 
 /** Fiche de découverte de l'exercice 8 (§4.2) : les deux mots de la paire, côte à côte. */
@@ -161,7 +166,7 @@ function renderQuestion(app, id) {
     app.runtime.currentQuestion = question;
     app.runtime.audioText = question.audioText;
     document.getElementById('app').innerHTML = questionScreenHtml(question, { progressLabel, act: 'answer' });
-    speak(question.audioText);
+    playAudio(app.progress.state.settings, question.audioText);
     return;
   }
 
@@ -176,7 +181,8 @@ function renderQuestion(app, id) {
 
   if (type === 'word' && facet === 'lecture') {
     const word = app.content.wordsById.get(elementId);
-    const question = buildReadAloudQuestion(word);
+    const showStress = app.progress.state.settings.showStress !== 'never';
+    const question = buildReadAloudQuestion(word, { showStress });
     app.runtime.currentQuestion = question;
     app.runtime.audioText = question.audioText;
     renderReadAloudScreen(question, progressLabel);
@@ -189,7 +195,7 @@ function renderQuestion(app, id) {
     app.runtime.currentQuestion = question;
     app.runtime.audioText = question.audioText ?? null;
     renderTypingScreen(question, progressLabel);
-    if (question.audioText) speak(question.audioText);
+    if (question.audioText) playAudio(app.progress.state.settings, question.audioText);
     return;
   }
 
@@ -198,7 +204,7 @@ function renderQuestion(app, id) {
   app.runtime.currentQuestion = question;
   app.runtime.audioText = question.audioText ?? null;
   document.getElementById('app').innerHTML = questionScreenHtml(question, { progressLabel, act: 'answer' });
-  if (question.audioText) speak(question.audioText);
+  if (question.audioText) playAudio(app.progress.state.settings, question.audioText);
 }
 
 /** Exercice 4 (§4.2) : toucher la syllabe accentuée. Une syllabe = un bouton, réponse immédiate. */
@@ -240,7 +246,7 @@ function renderReadAloudScreen(question, progressLabel) {
  */
 export function onReadAloudReveal(app) {
   const question = app.runtime.currentQuestion;
-  speak(question.audioText);
+  playAudio(app.progress.state.settings, question.audioText, { force: true });
   app.runtime.pendingCorrect = null;
   renderFeedback(app, null, question);
 }
@@ -376,15 +382,15 @@ export function onSessionRate(app, rating) {
   renderSessionStep(app);
 }
 
-/** Rejoue l'audio de la question ou de la fiche de découverte en cours. */
+/** Rejoue l'audio de la question ou de la fiche de découverte en cours (geste explicite). */
 export function replayCurrentAudio(app) {
-  if (app.runtime.audioText) speak(app.runtime.audioText);
+  if (app.runtime.audioText) playAudio(app.progress.state.settings, app.runtime.audioText, { force: true });
 }
 
 /** Joue un mot précis (fiche de découverte de l'exercice 8 : les deux mots d'une paire). */
 export function onPlayWord(app, text) {
   app.runtime.audioText = text; // pour que Espace/🔊 rejoue ce même mot ensuite
-  speak(text);
+  playAudio(app.progress.state.settings, text, { force: true });
 }
 
 function finishSession(app) {

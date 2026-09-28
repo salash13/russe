@@ -115,15 +115,18 @@ export function buildTraceQuestion(letter) {
 }
 
 /**
- * Exercice 3 (§4.2) : lire un mot à voix haute (accent affiché, §2.7), puis vérifier avec
- * l'audio. Auto-évalué : l'app ne peut pas juger la prononciation, c'est la note choisie
- * ensuite (§4.3) qui compte comme résultat.
+ * Exercice 3 (§4.2) : lire un mot à voix haute, puis vérifier avec l'audio. Auto-évalué :
+ * l'app ne peut pas juger la prononciation, c'est la note choisie ensuite (§4.3) qui compte
+ * comme résultat.
  * @param {object} word - une entrée de content/words/*.json
+ * @param {{showStress?: boolean}} [options] - accent affiché ou non (§2.7 : « toujours
+ *   stocké, affiché au début, puis retiré progressivement comme une béquille » — réglage
+ *   "accent affiché" de l'écran Réglages)
  */
-export function buildReadAloudQuestion(word) {
+export function buildReadAloudQuestion(word, { showStress = true } = {}) {
   return {
     kind: 'read',
-    displayRu: withStressMark(word.ru, word.stress),
+    displayRu: showStress ? withStressMark(word.ru, word.stress) : word.ru,
     audioText: word.ru,
     label: 'Lis ce mot à voix haute, puis vérifie',
     explanation: `${word.ru} — ${word.fr}`,
@@ -132,8 +135,9 @@ export function buildReadAloudQuestion(word) {
 
 /**
  * Exercice 8 (§4.2) : paires minimales audio (брат/брать, за́мок/замо́к). L'un des deux mots
- * est tiré au hasard et joué ; les deux choix affichent l'accent (§2.7) pour rester
- * distinguables même quand l'orthographe est identique (за́мок/замо́к).
+ * est tiré au hasard et joué ; les deux choix affichent TOUJOURS l'accent, quel que soit le
+ * réglage "accent affiché" — pour за́мок/замо́к (même orthographe), le masquer rendrait les
+ * deux choix strictement identiques et l'exercice impossible à répondre par la vue.
  * @param {object} pair - une entrée de content/pairs.json
  * @param {Map<string, object>} wordsById
  */

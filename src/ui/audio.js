@@ -86,3 +86,17 @@ export function speak(text, { slow = false } = {}) {
   utterance.onerror = (event) => console.warn('Synthèse vocale : échec de la lecture', event.error);
   window.speechSynthesis.speak(utterance);
 }
+
+/**
+ * Lit un texte en respectant les réglages (§4.1 écran Réglages) : la vitesse toujours lente
+ * si activée, et — pour une lecture AUTOMATIQUE seulement — le silence si "lecture
+ * automatique" est désactivé. `force: true` (bouton 🔊 pressé explicitement, ou "Vérifier")
+ * ignore ce silence : un geste explicite doit toujours produire du son.
+ * @param {object} settings - app.progress.state.settings
+ * @param {string} text
+ * @param {{force?: boolean}} [options]
+ */
+export function playAudio(settings, text, { force = false } = {}) {
+  if (!force && settings?.autoAudio === false) return;
+  speak(text, { slow: settings?.slowAudio === true });
+}

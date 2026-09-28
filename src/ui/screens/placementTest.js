@@ -9,7 +9,7 @@
 import { h } from '../dom.js';
 import { buildQuestion } from '../exercises.js';
 import { questionScreenHtml } from '../questionView.js';
-import { speak } from '../audio.js';
+import { playAudio } from '../audio.js';
 import { makeCardId } from '../../core/cards.js';
 import { createCard, nextInterval, RATING } from '../../core/srs.js';
 import { today, addDays } from '../../core/dates.js';
@@ -78,7 +78,7 @@ function renderPlacementItem(app) {
     progressLabel: `Test de départ · ${p.index + 1} / ${p.items.length}`,
     act: 'placement-answer',
   });
-  if (question.audioText) speak(question.audioText);
+  if (question.audioText) playAudio(app.progress.state.settings, question.audioText);
 }
 
 export function onPlacementAnswer(app, choiceId) {
