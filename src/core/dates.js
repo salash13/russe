@@ -55,6 +55,20 @@ export function isoWeekday(key) {
 }
 
 /**
+ * Les clés de jour de tous les jours d'un mois donné ('AAAA-MM'), dans l'ordre.
+ * Sert au calendrier de l'écran Progrès (§4.1).
+ */
+export function daysInMonthList(monthKeyStr) {
+  const [y, m] = monthKeyStr.split('-').map(Number);
+  const count = new Date(y, m, 0).getDate(); // jour 0 du mois suivant = dernier jour du mois courant
+  const days = [];
+  for (let d = 1; d <= count; d++) {
+    days.push(`${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`);
+  }
+  return days;
+}
+
+/**
  * Nombre de jours pratiqués distincts qui tombent dans le même mois que `refKey`
  * (par défaut aujourd'hui). Sert à l'écran d'accueil : « X jours pratiqués ce mois-ci »
  * (§4.4), mise en avant plutôt que la seule série.

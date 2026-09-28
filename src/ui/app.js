@@ -15,6 +15,7 @@ import { downloadDailyReminder } from './reminder.js';
 import { renderHome } from './screens/home.js';
 import { renderRules } from './screens/rulesScreen.js';
 import { renderSettings } from './screens/settingsScreen.js';
+import { renderProgress } from './screens/progressScreen.js';
 import { startPlacement, onPlacementAnswer, restartPlacement } from './screens/placementTest.js';
 import {
   startSession,
@@ -147,6 +148,9 @@ document.addEventListener('click', (event) => {
       break;
     case 'show-settings':
       renderSettings(app);
+      break;
+    case 'show-progress':
+      renderProgress(app);
       break;
     case 'export-corrupted':
       exportCorrupted();

@@ -42,6 +42,7 @@ export function startSession(app) {
   app.runtime.results = { correct: 0, wrong: 0 };
   app.runtime.discovered = new Set();
   app.runtime.screen = 'session';
+  app.runtime.sessionStartedAt = Date.now(); // pour le "temps passé" de l'écran Progrès (§4.1)
   renderSessionStep(app);
 }
 
@@ -379,6 +380,14 @@ export function onSessionRate(app, rating) {
   app.runtime.results[correct ? 'correct' : 'wrong']++;
   app.runtime.queue.answer(id, correct);
 
+  if (!correct) {
+    // "Erreurs par type" de l'écran Progrès (§4.1).
+    const { type } = parseCardId(id);
+    app.progress.state.stats.errorsByType ??= {};
+    app.progress.state.stats.errorsByType[type] = (app.progress.state.stats.errorsByType[type] ?? 0) + 1;
+    app.storage.save(app.progress.state);
+  }
+
   renderSessionStep(app);
 }
 
@@ -398,6 +407,15 @@ function finishSession(app) {
   if (!app.progress.state.days.includes(nowDay)) {
     app.progress.state.days.push(nowDay);
   }
+
+  // "Temps passé" de l'écran Progrès (§4.1) : minutes réellement écoulées pendant la
+  // séance, cumulées par jour (une séance ne remet jamais le compteur du jour à zéro).
+  if (app.runtime.sessionStartedAt) {
+    const minutes = (Date.now() - app.runtime.sessionStartedAt) / 60000;
+    app.progress.state.stats.minutesByDay ??= {};
+    app.progress.state.stats.minutesByDay[nowDay] = (app.progress.state.stats.minutesByDay[nowDay] ?? 0) + minutes;
+  }
+
   app.storage.save(app.progress.state);
 
   const { correct, wrong } = app.runtime.results;

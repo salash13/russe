@@ -6,6 +6,7 @@ import {
   diffDays,
   monthKey,
   isoWeekday,
+  daysInMonthList,
   practicedDaysInMonth,
   computeStreak,
 } from '../src/core/dates.js';
@@ -67,4 +68,16 @@ test('computeStreak : deux jours manqués dans la même semaine arrêtent la sé
 
 test('computeStreak : aucun jour pratiqué donne une série de 0', () => {
   assert.equal(computeStreak([], '2026-09-25'), 0);
+});
+
+test('daysInMonthList : un mois de 30 jours', () => {
+  const days = daysInMonthList('2026-09');
+  assert.equal(days.length, 30);
+  assert.equal(days[0], '2026-09-01');
+  assert.equal(days[29], '2026-09-30');
+});
+
+test('daysInMonthList : février d\'une année bissextile (29 jours) et non bissextile (28)', () => {
+  assert.equal(daysInMonthList('2024-02').length, 29);
+  assert.equal(daysInMonthList('2026-02').length, 28);
 });

@@ -35,6 +35,7 @@ export function renderHome(app) {
           : ''
       }
       <div class="home-links">
+        <button type="button" class="btn-link" data-act="show-progress">Progrès</button>
         <button type="button" class="btn-link" data-act="show-rules">Règles de lecture</button>
         <button type="button" class="btn-link" data-act="show-settings">Réglages</button>
       </div>
