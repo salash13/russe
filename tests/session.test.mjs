@@ -63,6 +63,43 @@ test('composeSession : comble avec l\'autre catégorie si une des deux manque', 
   assert.equal(result.cardIds.length, 10); // complété malgré seulement 2 cartes dues
 });
 
+test("composeSession : espace les cartes qui portent sur le même élément (anti-paquet)", () => {
+  // 3 facettes du même mot "x", plus 2 mots distincts : sans anti-paquet, les 3 facettes de
+  // "x" sortiraient collées en tête (signalé par Ben — répondre à l'une donne presque la
+  // réponse de la suivante).
+  const cards = {
+    'test-mot:x:f1': card('2026-09-24', 1),
+    'test-mot:x:f2': card('2026-09-24', 1),
+    'test-mot:x:f3': card('2026-09-24', 1),
+    'test-mot:y': card('2026-09-24', 1),
+    'test-mot:z': card('2026-09-24', 1),
+  };
+  const result = composeSession(cards, { today: '2026-09-24', size: 5 });
+  assert.equal(result.cardIds.length, 5);
+
+  for (let i = 1; i < result.cardIds.length; i++) {
+    const prevElement = result.cardIds[i - 1].split(':')[1];
+    const currElement = result.cardIds[i].split(':')[1];
+    assert.notEqual(
+      `${prevElement}|${currElement}`,
+      'x|x',
+      `Deux cartes de suite sur le même élément : ${result.cardIds[i - 1]} puis ${result.cardIds[i]}`
+    );
+  }
+});
+
+test('composeSession : l\'anti-paquet garde l\'ordre relatif des facettes d\'un même élément', () => {
+  const cards = {
+    'test-mot:x:f1': card('2026-09-24', 1),
+    'test-mot:x:f2': card('2026-09-24', 1),
+    'test-mot:x:f3': card('2026-09-24', 1),
+    'test-mot:y': card('2026-09-24', 1),
+  };
+  const result = composeSession(cards, { today: '2026-09-24', size: 4 });
+  const xOrder = result.cardIds.filter((id) => id.startsWith('test-mot:x:'));
+  assert.deepEqual(xOrder, ['test-mot:x:f1', 'test-mot:x:f2', 'test-mot:x:f3']);
+});
+
 test('createSessionQueue : parcourt les cartes dans l\'ordre si tout est correct', () => {
   const queue = createSessionQueue(['a', 'b', 'c']);
   assert.equal(queue.next(), 'a');

@@ -9,10 +9,51 @@
 // `skipped` plutôt que d'être silencieusement planifiée puis jamais montrée.
 
 import { diffDays } from './dates.js';
-import { isPresentable } from './cards.js';
+import { isPresentable, parseCardId } from './cards.js';
 
 const DEFAULT_NEW_RATIO = 0.3;
 const DEFAULT_OVERDUE_LIMIT_DAYS = 3; // seuil de retard réglable (§4.3) au-delà duquel plus de neuf
+
+/**
+ * Espace les cartes qui portent sur le même élément (ex. les 3 facettes "ecoute"/"accent"/
+ * "lecture" d'un même mot) au lieu de les laisser collées : sinon, répondre à la première
+ * donne quasiment la réponse de la suivante, et ça ne teste plus grand-chose (signalé par
+ * Ben). Glouton classique (type "task scheduler") : à chaque étape, prend dans le groupe qui
+ * a le plus de cartes restantes parmi ceux différents du précédent — sans ça, un simple
+ * round-robin épuise vite les petits groupes et laisse les grands se recoller en fin de
+ * liste. L'ordre relatif à l'intérieur de chaque groupe est conservé. Quand un seul groupe a
+ * encore des cartes, deux cartes du même élément redeviennent inévitables (principe des
+ * tiroirs) — c'est un dernier recours, pas le cas normal.
+ */
+function declump(cardIds) {
+  const groups = new Map(); // "type:élément" -> ids restants, dans l'ordre d'origine
+  for (const id of cardIds) {
+    const { type, elementId } = parseCardId(id);
+    const key = `${type}:${elementId}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(id);
+  }
+  const keys = [...groups.keys()];
+
+  const result = [];
+  let lastKey = null;
+  while (result.length < cardIds.length) {
+    let best = null;
+    for (const key of keys) {
+      if (key === lastKey) continue;
+      const bucket = groups.get(key);
+      if (bucket.length === 0) continue;
+      if (!best || bucket.length > groups.get(best).length) best = key;
+    }
+    if (!best) {
+      // Aucune alternative au dernier groupe placé : on est forcé de le reprendre.
+      best = keys.find((key) => groups.get(key).length > 0);
+    }
+    result.push(groups.get(best).shift());
+    lastKey = best;
+  }
+  return result;
+}
 
 /**
  * @param {Record<string, {due: string, reps: number}>} cards - état SRS de toutes les cartes, indexé par id
@@ -75,7 +116,7 @@ export function composeSession(cards, options) {
   }
 
   return {
-    cardIds: [...chosenDue, ...chosenNew].map((c) => c.id),
+    cardIds: declump([...chosenDue, ...chosenNew].map((c) => c.id)),
     dueCount: chosenDue.length,
     newCount: chosenNew.length,
     skipped,
