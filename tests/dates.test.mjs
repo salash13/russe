@@ -7,6 +7,7 @@ import {
   monthKey,
   isoWeekday,
   daysInMonthList,
+  shiftMonth,
   practicedDaysInMonth,
   computeStreak,
 } from '../src/core/dates.js';
@@ -80,4 +81,11 @@ test('daysInMonthList : un mois de 30 jours', () => {
 test('daysInMonthList : février d\'une année bissextile (29 jours) et non bissextile (28)', () => {
   assert.equal(daysInMonthList('2024-02').length, 29);
   assert.equal(daysInMonthList('2026-02').length, 28);
+});
+
+test('shiftMonth : avance et recule, y compris au changement d\'année', () => {
+  assert.equal(shiftMonth('2026-09', 1), '2026-10');
+  assert.equal(shiftMonth('2026-09', -1), '2026-08');
+  assert.equal(shiftMonth('2026-12', 1), '2027-01');
+  assert.equal(shiftMonth('2026-01', -1), '2025-12');
 });

@@ -12,7 +12,9 @@ import { diffDays } from './dates.js';
 import { isPresentable, parseCardId } from './cards.js';
 
 const DEFAULT_NEW_RATIO = 0.3;
-const DEFAULT_OVERDUE_LIMIT_DAYS = 3; // seuil de retard réglable (§4.3) au-delà duquel plus de neuf
+// Seuil de retard réglable (§4.3) au-delà duquel plus de neuf. Exporté pour que l'écran
+// Progrès explique le blocage avec le même chiffre, jamais une valeur dupliquée à la main.
+export const DEFAULT_OVERDUE_LIMIT_DAYS = 3;
 
 /**
  * Espace les cartes qui portent sur le même élément (ex. les 3 facettes "ecoute"/"accent"/

@@ -372,7 +372,6 @@ export function onSessionRate(app, rating) {
   updated.due = addDays(nowDay, nextInterval(updated.stability, retention));
   updated.lastReviewDay = nowDay;
   app.progress.state.cards[id] = updated;
-  app.storage.save(app.progress.state);
 
   // Auto-évaluation (lecture à voix haute, §4.2 exercice 3) : pendingCorrect est null, donc
   // c'est la note elle-même qui décide de ce qui compte comme réussi pour le récapitulatif.
@@ -380,13 +379,18 @@ export function onSessionRate(app, rating) {
   app.runtime.results[correct ? 'correct' : 'wrong']++;
   app.runtime.queue.answer(id, correct);
 
+  // Taux de réussite global de l'écran Progrès (§4.1) : toute réponse compte, pas seulement
+  // les erreurs (déjà suivies séparément par type juste en dessous).
+  const stats = app.progress.state.stats;
+  stats.totalCorrect = (stats.totalCorrect ?? 0) + (correct ? 1 : 0);
+  stats.totalWrong = (stats.totalWrong ?? 0) + (correct ? 0 : 1);
   if (!correct) {
-    // "Erreurs par type" de l'écran Progrès (§4.1).
+    // "Erreurs par type" de l'écran Progrès.
     const { type } = parseCardId(id);
-    app.progress.state.stats.errorsByType ??= {};
-    app.progress.state.stats.errorsByType[type] = (app.progress.state.stats.errorsByType[type] ?? 0) + 1;
-    app.storage.save(app.progress.state);
+    stats.errorsByType ??= {};
+    stats.errorsByType[type] = (stats.errorsByType[type] ?? 0) + 1;
   }
+  app.storage.save(app.progress.state);
 
   renderSessionStep(app);
 }

@@ -312,6 +312,19 @@ h1 {
   text-align: center;
 }
 
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.month-nav-label {
+  margin: 0;
+  min-width: 10ch;
+  text-align: center;
+}
+
 .calendar-weekdays,
 .calendar-grid {
   display: grid;

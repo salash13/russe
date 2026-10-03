@@ -15,7 +15,7 @@ import { downloadDailyReminder } from './reminder.js';
 import { renderHome } from './screens/home.js';
 import { renderRules } from './screens/rulesScreen.js';
 import { renderSettings } from './screens/settingsScreen.js';
-import { renderProgress } from './screens/progressScreen.js';
+import { renderProgress, shiftProgressMonth } from './screens/progressScreen.js';
 import { renderAlphabet } from './screens/alphabetScreen.js';
 import { renderDictionary } from './screens/dictionaryScreen.js';
 import { startPlacement, onPlacementAnswer, restartPlacement } from './screens/placementTest.js';
@@ -153,6 +153,12 @@ document.addEventListener('click', (event) => {
       break;
     case 'show-progress':
       renderProgress(app);
+      break;
+    case 'progress-prev-month':
+      shiftProgressMonth(app, el.dataset.value, -1);
+      break;
+    case 'progress-next-month':
+      shiftProgressMonth(app, el.dataset.value, 1);
       break;
     case 'show-alphabet':
       renderAlphabet(app);

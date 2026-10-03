@@ -48,6 +48,13 @@ export function monthKey(key) {
   return key.slice(0, 7);
 }
 
+/** Décale une clé de mois ('AAAA-MM') de `delta` mois (négatif pour reculer). */
+export function shiftMonth(monthKeyStr, delta) {
+  const [y, m] = monthKeyStr.split('-').map(Number);
+  const date = new Date(y, m - 1 + delta, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
 /** Jour de la semaine ISO d'une clé (1 = lundi ... 7 = dimanche). */
 export function isoWeekday(key) {
   const js = keyToDate(key).getDay(); // 0 = dimanche en JS
