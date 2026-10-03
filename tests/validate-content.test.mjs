@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { checkLetters, checkLots, lotCoverage, checkRules, checkWords, checkPairs, countSyllables } from '../scripts/validate-content.mjs';
+import { checkLetters, checkLots, lotCoverage, checkRules, checkWords, checkPairs, checkUnits, countSyllables } from '../scripts/validate-content.mjs';
 
 function reviewed(overrides = {}) {
   return { by: '', date: '', ok: false, ...overrides };
@@ -26,6 +26,14 @@ function pair(overrides = {}) {
   return {
     id: 'brat-brat', wordA: 'brat', wordB: 'brat-verbe', note: 'ь final',
     reviewed: reviewed(),
+    ...overrides,
+  };
+}
+
+function unit(overrides = {}) {
+  return {
+    id: 'a1-01', order: 1, level: 'A1', title: 'Se présenter', grammarTitle: 'Le genre des noms',
+    words: ['ya', 'ty'],
     ...overrides,
   };
 }
@@ -238,4 +246,45 @@ test('le vrai content/pairs.json est valide et référence des mots existants', 
   const pairsWords = await readContentJson('words/pairs-n0.json');
   const wordIds = new Set([...lecture, ...pairsWords].map((w) => w.id));
   assert.deepEqual(checkPairs(pairs, wordIds), []);
+});
+
+test('checkUnits : aucune erreur pour une unité bien formée référençant des mots existants', () => {
+  assert.deepEqual(checkUnits([unit()], new Set(['ya', 'ty'])), []);
+});
+
+test('checkUnits : signale un mot référencé introuvable', () => {
+  const errors = checkUnits([unit({ words: ['fantome'] })], new Set(['ya', 'ty']));
+  assert.ok(errors.some((e) => e.includes('fantome')));
+});
+
+test('checkUnits : signale les champs requis manquants', () => {
+  const errors = checkUnits([unit({ title: undefined, level: undefined })]);
+  assert.ok(errors.some((e) => e.includes('"title"')));
+  assert.ok(errors.some((e) => e.includes('"level"')));
+});
+
+test('checkUnits : signale un trou ou un doublon dans la séquence "order"', () => {
+  const gap = checkUnits([unit({ id: 'a1-01', order: 1 }), unit({ id: 'a1-02', order: 3 })]);
+  assert.ok(gap.some((e) => e.includes('séquence 1..N')));
+
+  const dup = checkUnits([unit({ id: 'a1-01', order: 1 }), unit({ id: 'a1-02', order: 1 })]);
+  assert.ok(dup.some((e) => e.includes('séquence 1..N')));
+});
+
+test('checkUnits : signale un id dupliqué', () => {
+  const errors = checkUnits([unit({ id: 'a1-01', order: 1 }), unit({ id: 'a1-01', order: 2 })]);
+  assert.ok(errors.some((e) => e.includes("Identifiant d'unité dupliqué")));
+});
+
+test('checkUnits : rejette un tableau absent', () => {
+  assert.deepEqual(checkUnits({ pas: 'un tableau' }), ['units.json doit contenir un tableau.']);
+});
+
+test('le vrai content/units.json est valide et référence des mots existants', async () => {
+  const { readContentJson } = await import('../scripts/validate-content.mjs');
+  const units = await readContentJson('units.json');
+  const wordIndex = await readContentJson('words/index.json');
+  const allWords = [];
+  for (const file of wordIndex) allWords.push(...(await readContentJson(`words/${file}`)));
+  assert.deepEqual(checkUnits(units, new Set(allWords.map((w) => w.id))), []);
 });

@@ -1,0 +1,62 @@
+[
+  {
+    "id": "a1-01", "order": 1, "level": "A1",
+    "title": "Se présenter",
+    "grammarTitle": "Le genre des noms",
+    "words": ["privet", "ya", "ty", "kak", "ochen", "priyatno", "poka", "da", "net", "spasibo", "pozhaluysta"]
+  },
+  {
+    "id": "a1-02", "order": 2, "level": "A1",
+    "title": "La famille",
+    "grammarTitle": "Le présent (1re et 2e conjugaison)",
+    "words": []
+  },
+  {
+    "id": "a1-03", "order": 3, "level": "A1",
+    "title": "Les nombres et les prix",
+    "grammarTitle": "L'accusatif",
+    "words": []
+  },
+  {
+    "id": "a1-04", "order": 4, "level": "A1",
+    "title": "La nourriture et le café",
+    "grammarTitle": "Le prépositionnel (в/на + lieu)",
+    "words": []
+  },
+  {
+    "id": "a1-05", "order": 5, "level": "A1",
+    "title": "Se déplacer (métro, taxi)",
+    "grammarTitle": "Le passé (-л, -ла, -ло, -ли)",
+    "words": []
+  },
+  {
+    "id": "a1-06", "order": 6, "level": "A1",
+    "title": "Le temps et les jours",
+    "grammarTitle": "хотеть / мочь",
+    "words": []
+  },
+  {
+    "id": "a1-07", "order": 7, "level": "A1",
+    "title": "La maison",
+    "grammarTitle": "Le génitif de base (у меня есть / нет)",
+    "words": []
+  },
+  {
+    "id": "a1-08", "order": 8, "level": "A1",
+    "title": "Les loisirs",
+    "grammarTitle": "Les nombres + génitif",
+    "words": []
+  },
+  {
+    "id": "a1-09", "order": 9, "level": "A1",
+    "title": "La santé",
+    "grammarTitle": null,
+    "words": []
+  },
+  {
+    "id": "a1-10", "order": 10, "level": "A1",
+    "title": "Au magasin",
+    "grammarTitle": null,
+    "words": []
+  }
+]

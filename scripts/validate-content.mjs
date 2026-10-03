@@ -295,6 +295,56 @@ export function checkPairs(pairs, wordIds = new Set()) {
 }
 
 /**
+ * Vérifie content/units.json (§5.1, ordre du programme A1+ — §2.6 : respecté par le code,
+ * jamais retrié) : id/order uniques, "order" en séquence 1..N sans trou, titre et niveau
+ * présents, et chaque mot référencé existe bien dans content/words/*.json.
+ * @returns {string[]}
+ */
+export function checkUnits(units, wordIds = new Set()) {
+  if (!Array.isArray(units)) return ['units.json doit contenir un tableau.'];
+
+  const errors = [];
+  const ids = new Set();
+  const orders = [];
+
+  for (const unit of units) {
+    const label = `units.json / "${unit?.id ?? '(sans id)'}"`;
+    if (!unit?.id) errors.push(`${label} : champ "id" manquant.`);
+    else if (ids.has(unit.id)) errors.push(`Identifiant d'unité dupliqué : "${unit.id}".`);
+    ids.add(unit?.id);
+
+    if (!unit?.title) errors.push(`${label} : champ "title" manquant.`);
+    if (!unit?.level) errors.push(`${label} : champ "level" manquant.`);
+
+    if (!Number.isInteger(unit?.order) || unit.order < 1) {
+      errors.push(`${label} : "order" doit être un entier >= 1.`);
+    } else {
+      orders.push(unit.order);
+    }
+
+    if (unit?.words !== undefined) {
+      if (!Array.isArray(unit.words)) {
+        errors.push(`${label} : "words" doit être un tableau.`);
+      } else if (wordIds.size > 0) {
+        for (const wordId of unit.words) {
+          if (!wordIds.has(wordId)) {
+            errors.push(`${label} : "words" référence "${wordId}", introuvable dans content/words/.`);
+          }
+        }
+      }
+    }
+  }
+
+  const sorted = [...orders].sort((a, b) => a - b);
+  const hasGapOrDuplicate = sorted.some((o, i) => o !== i + 1);
+  if (sorted.length > 0 && hasGapOrDuplicate) {
+    errors.push(`Les "order" de units.json doivent former une séquence 1..N sans trou ni doublon (trouvé : ${sorted.join(', ')}).`);
+  }
+
+  return errors;
+}
+
+/**
  * L'app (navigateur) ne peut pas lister un dossier : elle lit `words/index.json` pour
  * savoir quels fichiers charger. On vérifie ici qu'il ne peut jamais partir en désaccord
  * avec ce qui existe réellement sur disque (§6.2 : jamais deux sources de vérité).
@@ -398,6 +448,14 @@ async function main() {
     errors.push(e.message);
   }
 
+  let units = null;
+  try {
+    units = await readContentJson('units.json');
+    errors.push(...checkUnits(units, new Set(seenWordIds.keys())));
+  } catch (e) {
+    errors.push(e.message);
+  }
+
   if (errors.length === 0) {
     console.log(`✔ Contenu valide : ${letters.length} lettres réparties en ${lots.length} lots, ${rules.length} règles de lecture.`);
     for (const lot of lotCoverage(lots)) {
@@ -407,6 +465,8 @@ async function main() {
     console.log(`  - Mots : ${allWords.length} au total dans ${wordFiles.length} fichier(s), ${reviewedCount} relu(s) et visible(s), ${allWords.length - reviewedCount} en attente de relecture.`);
     const pairsReviewed = pairs.filter((p) => p.reviewed?.ok === true).length;
     console.log(`  - Paires minimales : ${pairs.length} au total, ${pairsReviewed} relue(s) et visible(s).`);
+    const unitsWithWords = units.filter((u) => Array.isArray(u.words) && u.words.length > 0).length;
+    console.log(`  - Unités : ${units.length} planifiées, ${unitsWithWords} avec du vocabulaire écrit.`);
     process.exit(0);
   } else {
     console.error(`✖ ${errors.length} erreur(s) de contenu :`);

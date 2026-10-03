@@ -1,0 +1,101 @@
+[
+  {
+    "id": "privet", "ru": "привет", "stress": 2,
+    "fr": "salut", "pos": "interjection",
+    "pron": "pri-VET",
+    "forms": {},
+    "unit": "a1-01", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-10-03", "ok": true }
+  },
+  {
+    "id": "ya", "ru": "я", "stress": 1,
+    "fr": "je", "pos": "pronom",
+    "pron": "YA",
+    "forms": {},
+    "unit": "a1-01", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-10-03", "ok": true }
+  },
+  {
+    "id": "ty", "ru": "ты", "stress": 1,
+    "fr": "tu", "pos": "pronom",
+    "pron": "TY",
+    "forms": {},
+    "unit": "a1-01", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-10-03", "ok": true }
+  },
+  {
+    "id": "kak", "ru": "как", "stress": 1,
+    "fr": "comment", "pos": "adverbe",
+    "pron": "KAK",
+    "forms": {},
+    "unit": "a1-01", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-10-03", "ok": true }
+  },
+  {
+    "id": "ochen", "ru": "очень", "stress": 1,
+    "fr": "très", "pos": "adverbe",
+    "pron": "O-chen'",
+    "forms": {},
+    "unit": "a1-01", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-10-03", "ok": true }
+  },
+  {
+    "id": "priyatno", "ru": "приятно", "stress": 2,
+    "fr": "agréable (« очень приятно » = enchanté)", "pos": "adverbe",
+    "pron": "pri-YAT-na",
+    "forms": {},
+    "unit": "a1-01", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-10-03", "ok": true }
+  },
+  {
+    "id": "poka", "ru": "пока", "stress": 2,
+    "fr": "au revoir (familier)", "pos": "interjection",
+    "pron": "pa-KA",
+    "forms": {},
+    "unit": "a1-01", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-10-03", "ok": true }
+  },
+  {
+    "id": "da", "ru": "да", "stress": 1,
+    "fr": "oui", "pos": "particule",
+    "pron": "DA",
+    "forms": {},
+    "unit": "a1-01", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-10-03", "ok": true }
+  },
+  {
+    "id": "net", "ru": "нет", "stress": 1,
+    "fr": "non", "pos": "particule",
+    "pron": "NET",
+    "forms": {},
+    "unit": "a1-01", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-10-03", "ok": true }
+  },
+  {
+    "id": "spasibo", "ru": "спасибо", "stress": 2,
+    "fr": "merci", "pos": "interjection",
+    "pron": "spa-SI-ba",
+    "forms": {},
+    "unit": "a1-01", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-10-03", "ok": true }
+  },
+  {
+    "id": "pozhaluysta", "ru": "пожалуйста", "stress": 2,
+    "fr": "s'il te plaît / je t'en prie", "pos": "interjection",
+    "pron": "pa-ZHA-lusta",
+    "forms": {},
+    "unit": "a1-01", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-10-03", "ok": true }
+  }
+]
