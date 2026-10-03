@@ -3,6 +3,10 @@
 // Écran Progrès (§4.1) : calendrier des jours pratiqués (navigable mois par mois), répartition
 // de ce qui est pratiqué par type, taux de réussite global, cartes en attente/en retard, les 5
 // points faibles, erreurs par type.
+//
+// Mise en forme : tuiles de stats pour les chiffres isolés, barres (meters) pour les
+// proportions (lettres/mots/paires pratiqués sur le total) plutôt que du texte "X / Y" nu —
+// une proportion se lit d'un coup d'œil sur une barre, pas en faisant le calcul soi-même.
 
 import { h } from '../dom.js';
 import {
@@ -27,6 +31,28 @@ const MONTH_NAMES = [
 function monthLabel(monthKeyStr) {
   const [y, m] = monthKeyStr.split('-').map(Number);
   return `${MONTH_NAMES[m - 1]} ${y}`;
+}
+
+/** Tuile de stat isolée (§ dataviz : label en casse de phrase, valeur grande et sobre). */
+function statTile(label, value, { hint = '', tone = '' } = {}) {
+  return `
+    <div class="stat-tile${tone ? ` stat-tile-${tone}` : ''}">
+      <span class="stat-label">${h(label)}</span>
+      <span class="stat-value">${h(value)}</span>
+      ${hint ? `<span class="stat-hint">${h(hint)}</span>` : ''}
+    </div>
+  `;
+}
+
+/** Barre de proportion : se lit d'un coup d'œil, pas besoin de calculer "X sur Y". */
+function meterRow(label, count, total) {
+  const ratio = total > 0 ? Math.min(count / total, 1) : 0;
+  return `
+    <div class="meter-item">
+      <div class="meter-label"><span>${h(label)}</span><span>${h(count)} / ${h(total)}</span></div>
+      <div class="meter-track"><div class="meter-fill" style="width: ${Math.round(ratio * 100)}%"></div></div>
+    </div>
+  `;
 }
 
 /** Une phrase courte identifiant une carte, pour la liste des points faibles. */
@@ -100,6 +126,7 @@ export function renderProgress(app, monthOverride) {
   const month = monthOverride ?? monthKey(nowDay);
   const isCurrentMonth = month === monthKey(nowDay);
   const practicedSet = new Set(state.days);
+  const streak = computeStreak(state.days, nowDay);
 
   const byType = countByType(state.cards);
   const totalLetters = app.content.letters.length;
@@ -118,7 +145,6 @@ export function renderProgress(app, monthOverride) {
 
   const { overdue, newWaiting } = waitingCounts(state.cards, nowDay);
 
-  // Les 5 cartes qui ont échoué le plus souvent (lapses), à difficulté décroissante en cas d'égalité.
   const weakCards = Object.entries(state.cards)
     .filter(([, card]) => card.reps > 0 && card.lapses > 0)
     .sort((a, b) => b[1].lapses - a[1].lapses || b[1].difficulty - a[1].difficulty)
@@ -130,61 +156,79 @@ export function renderProgress(app, monthOverride) {
     <section class="screen screen-progress">
       <h1>Progrès</h1>
 
-      <div class="month-nav">
-        <button type="button" class="btn-link" data-act="progress-prev-month" data-value="${h(month)}">◀</button>
-        <h2 class="settings-heading month-nav-label">${h(monthLabel(month))}</h2>
-        <button type="button" class="btn-link" data-act="progress-next-month" data-value="${h(month)}">▶</button>
+      <div class="progress-card">
+        <div class="month-nav">
+          <button type="button" class="btn-link" data-act="progress-prev-month" data-value="${h(month)}">◀</button>
+          <h2 class="progress-card-title month-nav-label">${h(monthLabel(month))}</h2>
+          <button type="button" class="btn-link" data-act="progress-next-month" data-value="${h(month)}">▶</button>
+        </div>
+        <div class="calendar-weekdays">
+          <span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span>
+        </div>
+        ${calendarHtml(month, practicedSet)}
+        <p class="settings-hint">
+          ${h(practicedDaysInMonth(state.days, month + '-01'))} jour(s) ce mois-ci
+          ${isCurrentMonth && streak > 0 ? ` · série de ${h(streak)} jour(s)` : ''}
+        </p>
       </div>
-      ${calendarHtml(month, practicedSet)}
-      <p class="settings-hint">
-        ${h(practicedDaysInMonth(state.days, month + '-01'))} jour(s) ce mois-ci
-        ${isCurrentMonth && computeStreak(state.days, nowDay) > 0 ? ` · série de ${h(computeStreak(state.days, nowDay))} jour(s)` : ''}
-      </p>
 
-      <h2 class="settings-heading">Vocabulaire pratiqué</h2>
-      <ul class="weak-list">
-        <li>Lettres : ${h(byType.letters)} / ${h(totalLetters)}</li>
-        <li>Mots : ${h(byType.words)} / ${h(totalWords)}</li>
-        <li>Paires minimales : ${h(byType.pairs)} / ${h(totalPairs)}</li>
-      </ul>
+      <div class="stat-row">
+        ${statTile('Taux de réussite', successRate === null ? '—' : `${successRate}%`, {
+          hint: totalAnswers > 0 ? `${totalCorrect} / ${totalAnswers} réponses` : 'Pas encore de données',
+        })}
+        ${statTile('Temps ce mois-ci', `${Math.round(minutesThisMonth)} min`)}
+      </div>
 
-      <h2 class="settings-heading">Temps passé — ${h(monthLabel(month))}</h2>
-      <p class="progress-figure">${h(Math.round(minutesThisMonth))} min</p>
+      <div class="progress-card">
+        <h2 class="progress-card-title">Vocabulaire pratiqué</h2>
+        <div class="meter-list">
+          ${meterRow('Lettres', byType.letters, totalLetters)}
+          ${meterRow('Mots', byType.words, totalWords)}
+          ${meterRow('Paires minimales', byType.pairs, totalPairs)}
+        </div>
+      </div>
 
-      <h2 class="settings-heading">Taux de réussite global</h2>
-      <p class="progress-figure">${successRate === null ? '—' : `${h(successRate)} %`}</p>
-      ${totalAnswers > 0 ? `<p class="settings-hint">${h(totalCorrect)} bonne(s) réponse(s) sur ${h(totalAnswers)}</p>` : ''}
+      <div class="progress-card">
+        <h2 class="progress-card-title">Cartes en attente aujourd'hui</h2>
+        <div class="stat-row">
+          ${statTile(overdue > 0 ? '⚠ En retard' : 'En retard', overdue, { tone: overdue > 0 ? 'warning' : '' })}
+          ${statTile('Neuves prêtes', newWaiting)}
+        </div>
+        ${
+          overdue > 0
+            ? `<p class="settings-hint">Au-delà de ${DEFAULT_OVERDUE_LIMIT_DAYS} jours de retard, l'app arrête d'introduire du nouveau contenu tant que ce n'est pas résorbé.</p>`
+            : ''
+        }
+      </div>
 
-      <h2 class="settings-heading">Cartes en attente aujourd'hui</h2>
-      <p class="settings-hint">
-        ${overdue} carte(s) en retard de révision (plus de ${DEFAULT_OVERDUE_LIMIT_DAYS} jours — bloque l'arrivée de nouveau contenu tant que ce n'est pas résorbé)<br>
-        ${newWaiting} carte(s) neuve(s) prête(s) à être découverte(s)
-      </p>
+      <div class="progress-card">
+        <h2 class="progress-card-title">Points faibles</h2>
+        ${
+          weakCards.length > 0
+            ? `<ul class="weak-list">
+                ${weakCards
+                  .map(
+                    ([id, card]) =>
+                      `<li>${h(describeCard(app, id))} — ${h(card.lapses)} échec${card.lapses === 1 ? '' : 's'}</li>`
+                  )
+                  .join('')}
+              </ul>`
+            : `<p class="settings-hint">Pas encore assez de données.</p>`
+        }
+      </div>
 
-      <h2 class="settings-heading">Points faibles</h2>
-      ${
-        weakCards.length > 0
-          ? `<ul class="weak-list">
-              ${weakCards
-                .map(
-                  ([id, card]) =>
-                    `<li>${h(describeCard(app, id))} — ${h(card.lapses)} échec${card.lapses === 1 ? '' : 's'}</li>`
-                )
-                .join('')}
-            </ul>`
-          : `<p class="settings-hint">Pas encore assez de données.</p>`
-      }
-
-      <h2 class="settings-heading">Erreurs par type</h2>
-      ${
-        Object.keys(errorsByType).length > 0
-          ? `<ul class="weak-list">
-              ${Object.entries(errorsByType)
-                .map(([type, count]) => `<li>${h(TYPE_LABELS[type] ?? type)} : ${h(count)}</li>`)
-                .join('')}
-            </ul>`
-          : `<p class="settings-hint">Pas encore d'erreur enregistrée.</p>`
-      }
+      <div class="progress-card">
+        <h2 class="progress-card-title">Erreurs par type</h2>
+        ${
+          Object.keys(errorsByType).length > 0
+            ? `<ul class="weak-list">
+                ${Object.entries(errorsByType)
+                  .map(([type, count]) => `<li>${h(TYPE_LABELS[type] ?? type)} : ${h(count)}</li>`)
+                  .join('')}
+              </ul>`
+            : `<p class="settings-hint">Pas encore d'erreur enregistrée.</p>`
+        }
+      </div>
 
       <button type="button" class="btn-link" data-act="go-home">Retour</button>
     </section>

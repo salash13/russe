@@ -312,17 +312,36 @@ h1 {
   text-align: center;
 }
 
+/* Chaque section de l'écran Progrès est une carte posée sur --bg, pas du texte qui
+ * flotte à plat — ça donne un rythme visuel clair entre les blocs (§ dataviz: components). */
+.progress-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+}
+
+.progress-card-title {
+  margin: 0 0 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
 .month-nav {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  margin-bottom: 8px;
 }
 
 .month-nav-label {
   margin: 0;
   min-width: 10ch;
   text-align: center;
+  color: var(--text);
 }
 
 .calendar-weekdays,
@@ -344,7 +363,7 @@ h1 {
   align-items: center;
   justify-content: center;
   border-radius: 8px;
-  background: var(--surface);
+  background: var(--bg);
   border: 1px solid var(--border);
   font-size: 0.8rem;
 }
@@ -361,10 +380,85 @@ h1 {
   font-weight: 600;
 }
 
-.progress-figure {
+/* Rangée de tuiles de stats (KPI row, § dataviz: choosing-a-form) : chaque chiffre isolé
+ * dans sa propre carte, pas une liste de nombres en vrac. Passe en colonne sous ~360px. */
+.stat-row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.stat-row .stat-tile {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+.stat-tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.stat-label {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.stat-value {
   font-size: 1.6rem;
   font-weight: 600;
-  margin: 0;
+  color: var(--text);
+  line-height: 1.15;
+}
+
+.stat-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Tuile "attire l'œil" : jamais la couleur seule — le label porte toujours aussi le
+ * symbole ⚠ (§4.5, aucune info uniquement par la couleur). */
+.stat-tile-warning {
+  border-color: var(--accent);
+}
+
+.stat-tile-warning .stat-value {
+  color: var(--accent);
+}
+
+/* Barres de proportion (meters, § dataviz: marks-and-anatomy) : le remplissage porte la
+ * valeur, la piste est un simple ton plus clair du même fond — se lit d'un coup d'œil. */
+.meter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.meter-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.meter-track {
+  height: 10px;
+  border-radius: 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+
+.meter-fill {
+  height: 100%;
+  border-radius: 6px 0 0 6px;
+  background: var(--primary);
 }
 
 .weak-list {
@@ -771,5 +865,9 @@ h1 {
 
   .choices {
     grid-template-columns: 1fr;
+  }
+
+  .stat-row {
+    flex-direction: column;
   }
 }
