@@ -128,6 +128,35 @@ h1 {
   font-size: 0.95rem;
 }
 
+.goal-ring-bg {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 10;
+}
+
+.goal-ring-fg {
+  fill: none;
+  stroke: var(--primary);
+  stroke-width: 10;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.3s ease;
+}
+
+.goal-ring-reached {
+  stroke: var(--ok);
+}
+
+.goal-ring-text {
+  fill: var(--text);
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.goal-ring-subtext {
+  fill: var(--text-muted);
+  font-size: 0.7rem;
+}
+
 .home-links {
   display: flex;
   gap: 4px;
@@ -333,6 +362,102 @@ h1 {
 
 .weak-list li {
   margin-bottom: 4px;
+}
+
+.screen-alphabet {
+  align-items: stretch;
+  text-align: left;
+  gap: 6px;
+  padding-bottom: 32px;
+}
+
+.screen-alphabet h1 {
+  text-align: center;
+}
+
+.alphabet-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.alphabet-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 72px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.alphabet-card:hover {
+  border-color: var(--primary);
+}
+
+.alphabet-print {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.alphabet-cursive {
+  font-size: 1.1rem;
+  color: var(--primary);
+}
+
+.alphabet-sound {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.screen-dictionary {
+  align-items: stretch;
+  text-align: left;
+  gap: 10px;
+  padding-bottom: 32px;
+}
+
+.screen-dictionary h1 {
+  text-align: center;
+}
+
+.dictionary-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dictionary-entry {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.dictionary-entry:hover {
+  border-color: var(--primary);
+}
+
+.dictionary-ru {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.dictionary-fr {
+  color: var(--text-muted);
+  font-size: 0.9rem;
 }
 
 .btn-audio {

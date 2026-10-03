@@ -16,6 +16,8 @@ import { renderHome } from './screens/home.js';
 import { renderRules } from './screens/rulesScreen.js';
 import { renderSettings } from './screens/settingsScreen.js';
 import { renderProgress } from './screens/progressScreen.js';
+import { renderAlphabet } from './screens/alphabetScreen.js';
+import { renderDictionary } from './screens/dictionaryScreen.js';
 import { startPlacement, onPlacementAnswer, restartPlacement } from './screens/placementTest.js';
 import {
   startSession,
@@ -152,6 +154,12 @@ document.addEventListener('click', (event) => {
     case 'show-progress':
       renderProgress(app);
       break;
+    case 'show-alphabet':
+      renderAlphabet(app);
+      break;
+    case 'show-dictionary':
+      renderDictionary(app);
+      break;
     case 'export-corrupted':
       exportCorrupted();
       break;
@@ -247,6 +255,14 @@ document.addEventListener('change', (event) => {
     }
   };
   reader.readAsText(file);
+});
+
+// Recherche en direct du Dictionnaire : un <input type="search"> n'émet pas de "click" ou
+// "change" utile à chaque frappe, mais un "input" — géré à part, comme l'import de fichier.
+document.addEventListener('input', (event) => {
+  if (event.target.closest('[data-act-input="search-dictionary"]')) {
+    renderDictionary(app, event.target.value);
+  }
 });
 
 // Clavier (§4.5) : 1-4 pour choisir, Espace pour rejouer l'audio, Entrée pour valider une
