@@ -422,13 +422,15 @@ h1 {
 }
 
 /* Tuile "attire l'œil" : jamais la couleur seule — le label porte toujours aussi le
- * symbole ⚠ (§4.5, aucune info uniquement par la couleur). */
+ * symbole ⚠ (§4.5, aucune info uniquement par la couleur). --ko plutôt que --accent : en
+ * clair, --accent (orange) n'a qu'un contraste de 2:1 sur fond blanc (bien sous le minimum
+ * WCAG AA de 3:1 même pour du texte large) — --ko est prévu pour exactement cet usage. */
 .stat-tile-warning {
-  border-color: var(--accent);
+  border-color: var(--ko);
 }
 
 .stat-tile-warning .stat-value {
-  color: var(--accent);
+  color: var(--ko);
 }
 
 /* Barres de proportion (meters, § dataviz: marks-and-anatomy) : le remplissage porte la

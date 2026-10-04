@@ -123,8 +123,3 @@ export function seedWordCards(cardsState, words, todayKey) {
   }
   return added;
 }
-
-/** Les deux identifiants de carte associés à une lettre (facette "son" et facette "lettre"). */
-export function letterCardIds(letterId) {
-  return [makeCardId('letter', letterId, 'son'), makeCardId('letter', letterId, 'lettre')];
-}

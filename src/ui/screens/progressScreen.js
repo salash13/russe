@@ -48,7 +48,7 @@ function statTile(label, value, { hint = '', tone = '' } = {}) {
 function meterRow(label, count, total) {
   const ratio = total > 0 ? Math.min(count / total, 1) : 0;
   return `
-    <div class="meter-item">
+    <div>
       <div class="meter-label"><span>${h(label)}</span><span>${h(count)} / ${h(total)}</span></div>
       <div class="meter-track"><div class="meter-fill" style="width: ${Math.round(ratio * 100)}%"></div></div>
     </div>
