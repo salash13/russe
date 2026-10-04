@@ -6,7 +6,7 @@
 // applique la note choisie par l'utilisateur, et boucle jusqu'à la fin. Une carte ratée
 // revient avant la fin de la séance (comportement de core/session.js#createSessionQueue).
 
-import { h } from '../dom.js';
+import { h, appRoot } from '../dom.js';
 import {
   buildQuestion,
   buildWordListening,
@@ -83,7 +83,7 @@ function renderLetterDiscovery(app, elementId) {
   // une majuscule isolée fait épeler "lettre majuscule X" en entier à la synthèse vocale).
   app.runtime.audioText = letter.lower;
 
-  document.getElementById('app').innerHTML = `
+  appRoot().innerHTML = `
     <section class="screen screen-discovery" aria-live="polite">
       <p class="prompt-letter" lang="ru">${h(letter.print)} ${h(letter.lower)}</p>
       <p class="prompt-letter cursive" lang="ru">${h(letter.print)} ${h(letter.lower)}</p>
@@ -102,7 +102,7 @@ function renderWordDiscovery(app, elementId) {
   const word = app.content.wordsById.get(elementId);
   app.runtime.audioText = word.ru;
 
-  document.getElementById('app').innerHTML = `
+  appRoot().innerHTML = `
     <section class="screen screen-discovery" aria-live="polite">
       <p class="prompt-letter" lang="ru">${h(word.ru)}</p>
       <p class="letter-sound">« ${h(word.pron ?? word.ru)} » — ${h(word.fr)}</p>
@@ -121,7 +121,7 @@ function renderPairDiscovery(app, elementId) {
   const wordB = app.content.wordsById.get(pair.wordB);
   app.runtime.audioText = wordA.ru; // pour Espace/🔊 : au moins un des deux à rejouer
 
-  document.getElementById('app').innerHTML = `
+  appRoot().innerHTML = `
     <section class="screen screen-discovery" aria-live="polite">
       <p class="question-text">Deux mots qui se ressemblent — écoute la différence</p>
       <div class="pair-words">
@@ -166,7 +166,7 @@ function renderQuestion(app, id) {
     const question = buildPairQuestion(pair, app.content.wordsById);
     app.runtime.currentQuestion = question;
     app.runtime.audioText = question.audioText;
-    document.getElementById('app').innerHTML = questionScreenHtml(question, { progressLabel, act: 'answer' });
+    appRoot().innerHTML = questionScreenHtml(question, { progressLabel, act: 'answer' });
     playAudio(app.progress.state.settings, question.audioText);
     return;
   }
@@ -204,13 +204,13 @@ function renderQuestion(app, id) {
   const question = buildQuestion(letter, facet, app.content.letters);
   app.runtime.currentQuestion = question;
   app.runtime.audioText = question.audioText ?? null;
-  document.getElementById('app').innerHTML = questionScreenHtml(question, { progressLabel, act: 'answer' });
+  appRoot().innerHTML = questionScreenHtml(question, { progressLabel, act: 'answer' });
   if (question.audioText) playAudio(app.progress.state.settings, question.audioText);
 }
 
 /** Exercice 4 (§4.2) : toucher la syllabe accentuée. Une syllabe = un bouton, réponse immédiate. */
 function renderAccentScreen(question, progressLabel) {
-  document.getElementById('app').innerHTML = `
+  appRoot().innerHTML = `
     <section class="screen screen-question" aria-live="polite">
       <p class="session-progress">${h(progressLabel)}</p>
       <h2 class="question-text">${h(question.label)}</h2>
@@ -230,7 +230,7 @@ function renderAccentScreen(question, progressLabel) {
 
 /** Exercice 3 (§4.2) : lire à voix haute, accent affiché (§2.7), puis vérifier avec l'audio. */
 function renderReadAloudScreen(question, progressLabel) {
-  document.getElementById('app').innerHTML = `
+  appRoot().innerHTML = `
     <section class="screen screen-question" aria-live="polite">
       <p class="session-progress">${h(progressLabel)}</p>
       <p class="prompt-letter" lang="ru">${h(question.displayRu)}</p>
@@ -254,7 +254,7 @@ export function onReadAloudReveal(app) {
 
 /** Exercice 6 (§4.2) : tracer une lettre en cursive avec le doigt, puis vérifier (auto-évalué). */
 function renderTraceScreen(question, progressLabel) {
-  document.getElementById('app').innerHTML = `
+  appRoot().innerHTML = `
     <section class="screen screen-question" aria-live="polite">
       <p class="session-progress">${h(progressLabel)}</p>
       <p class="prompt-letter cursive" lang="ru">${h(question.displayLetter)}</p>
@@ -273,7 +273,7 @@ export function onTraceReveal(app) {
 
 /** Exercice 7 (§4.2) : écouter, taper au clavier cyrillique à l'écran, valider. */
 function renderTypingScreen(question, progressLabel) {
-  document.getElementById('app').innerHTML = `
+  appRoot().innerHTML = `
     <section class="screen screen-question" aria-live="polite">
       <p class="session-progress">${h(progressLabel)}</p>
       <button type="button" class="btn-audio" data-act="play-audio" aria-label="Écouter">🔊</button>
@@ -343,7 +343,7 @@ function renderFeedback(app, correct, question, result = null) {
     toneClass = 'feedback-ko';
   }
 
-  document.getElementById('app').innerHTML = `
+  appRoot().innerHTML = `
     <section class="screen screen-feedback" role="status" aria-live="polite">
       <p class="feedback ${toneClass}">${h(statusLine)}</p>
       <div class="choices" role="group" aria-label="Note">
@@ -424,7 +424,7 @@ function finishSession(app) {
 
   const { correct, wrong } = app.runtime.results;
   const total = correct + wrong;
-  document.getElementById('app').innerHTML = `
+  appRoot().innerHTML = `
     <section class="screen screen-recap">
       <h1>Séance terminée</h1>
       <p class="recap-score">${h(correct)} / ${h(total)} bonnes réponses</p>

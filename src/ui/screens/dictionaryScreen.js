@@ -4,7 +4,7 @@
 // affiché. « Appris » = au moins une carte de ce mot déjà présentée (reps > 0) — même
 // définition que « mots sus » de l'écran Progrès, pour rester cohérent.
 
-import { h } from '../dom.js';
+import { h, appRoot } from '../dom.js';
 import { withStressMark } from '../../core/text.js';
 import { parseCardId } from '../../core/cards.js';
 
@@ -38,7 +38,7 @@ export function renderDictionary(app, query = '') {
     })
     .sort((a, b) => a.fr.localeCompare(b.fr, 'fr'));
 
-  document.getElementById('app').innerHTML = `
+  appRoot().innerHTML = `
     <section class="screen screen-dictionary">
       <h1>Dictionnaire</h1>
       <input

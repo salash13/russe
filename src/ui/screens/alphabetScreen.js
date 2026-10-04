@@ -5,12 +5,12 @@
 // tracé (exercice 6) reste réservé à la séance — ici, c'est une vue de référence à parcourir,
 // pas un exercice.
 
-import { h } from '../dom.js';
+import { h, appRoot } from '../dom.js';
 
 export function renderAlphabet(app) {
   const lots = [...app.content.lots].sort((a, b) => a.id - b.id);
 
-  document.getElementById('app').innerHTML = `
+  appRoot().innerHTML = `
     <section class="screen screen-alphabet">
       <h1>Alphabet</h1>
       <p class="settings-hint">Touche une lettre pour entendre son son.</p>

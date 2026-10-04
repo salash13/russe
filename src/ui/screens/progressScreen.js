@@ -8,7 +8,7 @@
 // proportions (lettres/mots/paires pratiqués sur le total) plutôt que du texte "X / Y" nu —
 // une proportion se lit d'un coup d'œil sur une barre, pas en faisant le calcul soi-même.
 
-import { h } from '../dom.js';
+import { h, appRoot } from '../dom.js';
 import {
   today,
   monthKey,
@@ -152,7 +152,7 @@ export function renderProgress(app, monthOverride) {
 
   const errorsByType = state.stats.errorsByType ?? {};
 
-  document.getElementById('app').innerHTML = `
+  appRoot().innerHTML = `
     <section class="screen screen-progress">
       <h1>Progrès</h1>
 

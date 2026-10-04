@@ -4,7 +4,7 @@
 // forçable, taille du texte), rappel calendrier, sauvegarde (export/import), et une zone
 // « danger » séparée pour tout effacer — jamais mélangée avec le reste (§4.1).
 
-import { h } from '../dom.js';
+import { h, appRoot } from '../dom.js';
 
 function toggleButton(act, label, active) {
   return `
@@ -38,7 +38,7 @@ export function renderSettings(app, { importMessage = '' } = {}) {
   const theme = s.theme ?? 'system';
   const textSize = s.textSize ?? 'normal';
 
-  document.getElementById('app').innerHTML = `
+  appRoot().innerHTML = `
     <section class="screen screen-settings">
       <h1>Réglages</h1>
 

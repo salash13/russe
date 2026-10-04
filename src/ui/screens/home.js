@@ -4,7 +4,7 @@
 // des chiffres de motivation sobre (§4.4 — pas de série mise en avant seule, mais les jours
 // pratiqués ce mois-ci).
 
-import { h } from '../dom.js';
+import { h, appRoot } from '../dom.js';
 import { today, practicedDaysInMonth, computeStreak } from '../../core/dates.js';
 
 /** Anneau SVG de l'objectif du jour (§4.1) : minutes déjà pratiquées aujourd'hui / objectif. */
@@ -37,7 +37,7 @@ export function renderHome(app) {
   const goalMinutes = state.settings.goalMinutes ?? 10;
   const todayMinutes = state.stats.minutesByDay?.[nowDay] ?? 0;
 
-  const root = document.getElementById('app');
+  const root = appRoot();
   root.innerHTML = `
     <section class="screen screen-home">
       <h1 lang="ru">Русский</h1>

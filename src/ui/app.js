@@ -7,6 +7,7 @@
 
 import { createStorage } from '../core/storage.js';
 import { today } from '../core/dates.js';
+import { appRoot } from './dom.js';
 import { loadContent, seedWordCards, seedPairCards } from './content.js';
 import { primeVoices } from './audio.js';
 import { insertChar, backspace } from './keyboard.js';
@@ -45,7 +46,7 @@ const app = {
 };
 
 function renderCorrupted() {
-  document.getElementById('app').innerHTML = `
+  appRoot().innerHTML = `
     <section class="screen screen-error">
       <h1>Progression illisible</h1>
       <p>La sauvegarde enregistrée sur cet appareil n'a pas pu être lue. Rien n'a été

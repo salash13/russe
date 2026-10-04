@@ -6,7 +6,7 @@
 // par une fiche de découverte ; les autres suivent le parcours normal (carte neuve, due
 // aujourd'hui — elles seront découvertes à la première séance, voir sessionScreen.js).
 
-import { h } from '../dom.js';
+import { h, appRoot } from '../dom.js';
 import { buildQuestion } from '../exercises.js';
 import { questionScreenHtml } from '../questionView.js';
 import { playAudio } from '../audio.js';
@@ -74,7 +74,7 @@ function renderPlacementItem(app) {
   app.runtime.currentQuestion = question;
   app.runtime.audioText = question.audioText ?? null;
 
-  document.getElementById('app').innerHTML = questionScreenHtml(question, {
+  appRoot().innerHTML = questionScreenHtml(question, {
     progressLabel: `Test de départ · ${p.index + 1} / ${p.items.length}`,
     act: 'placement-answer',
   });
@@ -140,7 +140,7 @@ function renderPlacementResult(app, knownLetters, toLearnLetters) {
   const total = knownLetters.length + toLearnLetters.length;
   const letterChip = (l) => `<span class="letter-chip" lang="ru">${h(l.print)}</span>`;
 
-  document.getElementById('app').innerHTML = `
+  appRoot().innerHTML = `
     <section class="screen screen-placement-result">
       <h1>Test de départ terminé</h1>
       <p class="recap-score">${h(knownLetters.length)} / ${h(total)} lettres déjà connues</p>

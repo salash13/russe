@@ -6,14 +6,14 @@
 // pour les mots et les paires (§5.5), une règle non relue (`reviewed.ok`) reste invisible —
 // appliqué ici en plus de scripts/validate-content.mjs, jamais l'un sans l'autre.
 
-import { h } from '../dom.js';
+import { h, appRoot } from '../dom.js';
 
 export function renderRules(app) {
   const rules = [...app.content.rules]
     .filter((rule) => rule.reviewed?.ok === true)
     .sort((a, b) => a.order - b.order);
 
-  document.getElementById('app').innerHTML = `
+  appRoot().innerHTML = `
     <section class="screen screen-rules">
       <h1>Règles de lecture</h1>
       ${
