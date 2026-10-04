@@ -5,6 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Русский — Apprendre le russe</title>
   <meta name="description" content="Apprendre le russe, du français vers le russe." />
+  <!-- Appli perso, pas un service public : rien à gagner à apparaître dans une recherche. -->
+  <meta name="robots" content="noindex, nofollow" />
+  <!--
+    Aucune ressource tierce (tout est self-hosted, §6.2), et depuis l'extraction du script
+    d'enregistrement du service worker dans register-sw.js, plus aucun script ni style en
+    ligne n'est nécessaire — la CSP peut donc rester stricte des deux côtés.
+  -->
+  <meta http-equiv="Content-Security-Policy" content="
+    default-src 'self';
+    script-src 'self';
+    style-src 'self';
+    img-src 'self';
+    font-src 'self';
+    connect-src 'self';
+    manifest-src 'self';
+    base-uri 'self';
+    form-action 'self';
+    object-src 'none';
+  " />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="assets/icons/icon-192.png" />
@@ -14,14 +33,6 @@
 <body>
   <main id="app" aria-live="polite"></main>
   <script type="module" src="src/ui/app.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js').catch(() => {
-          // Hors ligne indisponible sur ce navigateur : l'app reste utilisable en ligne.
-        });
-      });
-    }
-  </script>
+  <script src="src/ui/register-sw.js"></script>
 </body>
 </html>

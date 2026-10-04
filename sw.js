@@ -4,7 +4,7 @@
 // contient la version : il change à chaque publication pour ne jamais mélanger ancien
 // code et nouveau contenu (les anciens caches sont supprimés à l'activation).
 
-const CACHE_NAME = 'russe-v4';
+const CACHE_NAME = 'russe-v5';
 
 const PRECACHE_URLS = [
   './',
@@ -12,6 +12,7 @@ const PRECACHE_URLS = [
   './manifest.webmanifest',
   './src/ui/app.css',
   './src/ui/app.js',
+  './src/ui/register-sw.js',
   './src/ui/dom.js',
   './src/ui/audio.js',
   './src/ui/content.js',
@@ -92,8 +93,13 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request)
       .then((response) => {
-        const copy = response.clone();
-        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        // Seule une réponse réellement exploitable (200 ok) remplace le cache de secours :
+        // une 404/500 mise en cache resterait le "secours hors-ligne" tant que le réseau ne
+        // repasse pas, ce qui serait pire que de garder la dernière bonne version connue.
+        if (response.ok) {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+        }
         return response;
       })
       .catch(() => caches.match(event.request))

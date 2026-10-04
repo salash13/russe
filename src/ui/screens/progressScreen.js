@@ -44,15 +44,26 @@ function statTile(label, value, { hint = '', tone = '' } = {}) {
   `;
 }
 
-/** Barre de proportion : se lit d'un coup d'œil, pas besoin de calculer "X sur Y". */
+/**
+ * Barre de proportion : se lit d'un coup d'œil, pas besoin de calculer "X sur Y". Le
+ * pourcentage passe par data-ratio plutôt que par un attribut style="" en dur dans le HTML
+ * (posé ensuite via la CSSOM par applyMeterWidths) : pas besoin d'autoriser le style en
+ * ligne dans la CSP de l'app pour ce seul usage.
+ */
 function meterRow(label, count, total) {
   const ratio = total > 0 ? Math.min(count / total, 1) : 0;
   return `
     <div>
       <div class="meter-label"><span>${h(label)}</span><span>${h(count)} / ${h(total)}</span></div>
-      <div class="meter-track"><div class="meter-fill" style="width: ${Math.round(ratio * 100)}%"></div></div>
+      <div class="meter-track"><div class="meter-fill" data-ratio="${Math.round(ratio * 100)}"></div></div>
     </div>
   `;
+}
+
+function applyMeterWidths() {
+  for (const el of document.querySelectorAll('.meter-fill')) {
+    el.style.width = `${el.dataset.ratio}%`;
+  }
 }
 
 /** Une phrase courte identifiant une carte, pour la liste des points faibles. */
@@ -233,6 +244,7 @@ export function renderProgress(app, monthOverride) {
       <button type="button" class="btn-link" data-act="go-home">Retour</button>
     </section>
   `;
+  applyMeterWidths();
 }
 
 /** Décale le mois affiché de `delta` (-1 ou +1) et réaffiche. */
