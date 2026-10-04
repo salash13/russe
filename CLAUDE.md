@@ -15,7 +15,7 @@ relevés par l'audit du projet sœur `thai-fr` (voir §11 du document de référ
 - **Zéro build, zéro dépendance npm.** Modules ES natifs (`<script type="module">`) uniquement.
 - **Le cœur ne touche jamais le DOM** (`src/core/*`) : FSRS, séance, cartes, storage, migrations,
   dates, comparaison de texte. Testable dans Node sans navigateur.
-- **Tout le HTML généré passe par `h()`/`esc()`** — jamais de concaténation brute (risque d'injection
+- **Tout le HTML généré passe par `h()`** — jamais de concaténation brute (risque d'injection
   et de bug d'affichage).
 - **Le contenu vit dans `content/*.json`, jamais dans le code.** Identifiants stables (`zh`, `dom`),
   jamais le caractère ou le mot lui-même comme clé.
@@ -39,7 +39,7 @@ Voir §6.2 du document de référence pour le détail. En résumé :
 
 ```
 index.html, manifest.webmanifest, sw.js
-src/core/    (srs.js, session.js, cards.js, storage.js, migrate.js, dates.js, text.js — sans DOM)
+src/core/    (srs.js, session.js, cards.js, seeding.js, storage.js, migrate.js, dates.js, text.js — sans DOM)
 src/ui/      (screens/*.js, dom.js, audio.js, keyboard.js, app.css)
 content/     (letters.json, rules.json, lots.json, units.json, words/, sentences/, grammar/, audio/)
 scripts/     (serve.mjs, validate-content.mjs)

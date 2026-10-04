@@ -8,7 +8,8 @@
 import { createStorage } from '../core/storage.js';
 import { today } from '../core/dates.js';
 import { appRoot } from './dom.js';
-import { loadContent, seedWordCards, seedPairCards } from './content.js';
+import { loadContent } from './content.js';
+import { seedWordCards, seedPairCards } from '../core/seeding.js';
 import { primeVoices } from './audio.js';
 import { insertChar, backspace } from './keyboard.js';
 import { applyTheme } from './theme.js';

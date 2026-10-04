@@ -267,7 +267,7 @@ Les clés sont des **identifiants stables** (`zh`, `dom`), jamais le caractère 
 
 - Modules ES natifs (`<script type="module">`), zéro build, zéro dépendance.
 - **Le cœur ne touche jamais le DOM** (répétition espacée, séance, migrations, validation), pour pouvoir le tester dans Node.
-- Tout le HTML généré passe par une fonction d'échappement (`esc()` / `h()`), jamais de concaténation brute.
+- Tout le HTML généré passe par une fonction d'échappement (`h()`), jamais de concaténation brute.
 - Toute écriture de progression passe par `Storage`.
 - Le français est la langue de l'interface, des commentaires et des noms métier.
 
@@ -282,13 +282,14 @@ src/
     srs.js             FSRS
     session.js         composition d'une séance
     cards.js           registre des types de cartes
+    seeding.js         quelles cartes neuves créer à partir du contenu relu (§2.6, §5.5)
     storage.js         lecture/écriture + sauvegarde de secours
     migrate.js         migrations de la progression
     dates.js           jour local, série
     text.js            comparaison de saisie (ё/е, accent, majuscules)
   ui/
     screens/*.js       un fichier par écran
-    dom.js             h(), esc(), rendu
+    dom.js             h(), rendu
     audio.js           synthèse ru-RU + enregistrements
     keyboard.js        clavier cyrillique à l'écran
   app.css

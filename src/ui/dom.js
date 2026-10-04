@@ -1,9 +1,10 @@
 // src/ui/dom.js
 //
 // Rendu minimal, sans framework (§6.1). Toute valeur interpolée dans un template passe par
-// h() (= esc()) : jamais de concaténation brute qui laisserait passer du HTML non voulu.
+// h() : jamais de concaténation brute qui laisserait passer du HTML non voulu.
 
-export function esc(value) {
+/** Échappe une valeur pour une insertion sûre dans du HTML (&, <, >, ", '). */
+export function h(value) {
   return String(value)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -11,8 +12,6 @@ export function esc(value) {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 }
-
-export const h = esc;
 
 /** Le conteneur racine de l'application (id="app" dans index.html). */
 export function appRoot() {

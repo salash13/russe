@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isUnitUnlocked, seedWordCards, seedPairCards } from '../src/ui/content.js';
+import { isUnitUnlocked, seedWordCards, seedPairCards } from '../src/core/seeding.js';
 
 function word(overrides = {}) {
   return { id: 'ya', ru: 'я', fr: 'je', unit: 'a1-01', reviewed: { ok: true }, ...overrides };

@@ -4,7 +4,7 @@
 // contient la version : il change à chaque publication pour ne jamais mélanger ancien
 // code et nouveau contenu (les anciens caches sont supprimés à l'activation).
 
-const CACHE_NAME = 'russe-v5';
+const CACHE_NAME = 'russe-v6';
 
 const PRECACHE_URLS = [
   './',
@@ -32,6 +32,7 @@ const PRECACHE_URLS = [
   './src/core/dates.js',
   './src/core/text.js',
   './src/core/cards.js',
+  './src/core/seeding.js',
   './src/core/srs.js',
   './src/core/migrate.js',
   './src/core/storage.js',
