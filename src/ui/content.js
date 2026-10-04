@@ -3,24 +3,25 @@
 // Charge le contenu (§5) et déclare comment chaque type de carte se présente (§4.3), pour
 // que `isPresentable` (src/core/cards.js) sache les reconnaître.
 
-import { registerCardType, makeCardId } from '../core/cards.js';
+import { registerCardType, makeCardId, parseCardId } from '../core/cards.js';
 import { splitSyllables } from '../core/text.js';
 
 let cache = null;
 
 /**
- * Charge (une seule fois) letters.json, lots.json, rules.json, pairs.json et tous les
- * fichiers de content/words/ (listés dans words/index.json — le navigateur ne peut pas
- * lister un dossier lui-même), et enregistre les types de carte "letter", "word" et "pair".
+ * Charge (une seule fois) letters.json, lots.json, rules.json, pairs.json, units.json et
+ * tous les fichiers de content/words/ (listés dans words/index.json — le navigateur ne peut
+ * pas lister un dossier lui-même), et enregistre les types de carte "letter", "word" et "pair".
  */
 export async function loadContent() {
   if (cache) return cache;
 
-  const [letters, lots, rules, pairs, wordIndex] = await Promise.all([
+  const [letters, lots, rules, pairs, units, wordIndex] = await Promise.all([
     fetch('content/letters.json').then((r) => r.json()),
     fetch('content/lots.json').then((r) => r.json()),
     fetch('content/rules.json').then((r) => r.json()),
     fetch('content/pairs.json').then((r) => r.json()),
+    fetch('content/units.json').then((r) => r.json()),
     fetch('content/words/index.json').then((r) => r.json()),
   ]);
 
@@ -32,7 +33,7 @@ export async function loadContent() {
   const lettersById = new Map(letters.map((l) => [l.id, l]));
   const wordsById = new Map(words.map((w) => [w.id, w]));
   const pairsById = new Map(pairs.map((p) => [p.id, p]));
-  cache = { letters, lots, rules, words, pairs, lettersById, wordsById, pairsById };
+  cache = { letters, lots, rules, words, pairs, units, lettersById, wordsById, pairsById };
 
   // Une carte "letter:<id>:son", "letter:<id>:lettre" ou "letter:<id>:cursive" (exercice 5,
   // reconnaître la cursive) ne peut être présentée que si la lettre existe encore dans le
@@ -84,17 +85,44 @@ export async function loadContent() {
 }
 
 /**
+ * Une unité absente de units.json (ex. "n0-lecture", "n0-pairs" : contenu de lecture
+ * d'avant le programme A1) est toujours débloquée. Une unité du programme A1 ne l'est que
+ * si toutes les unités qui la précèdent (ordre de units.json) ont déjà la totalité de leurs
+ * mots relus introduits au moins une fois (une carte avec reps > 0) — §2.6 : « une règle à
+ * la fois, dans l'ordre », jamais de nouveau contenu qui arrive en vrac. Une unité encore
+ * vide (aucun mot relu qui lui appartient) ne bloque personne : il n'y a rien à introduire.
+ */
+export function isUnitUnlocked(unitId, { units, words, cards }) {
+  const target = units.find((u) => u.id === unitId);
+  if (!target) return true;
+
+  const introduced = (wordId) =>
+    Object.entries(cards).some(([id, card]) => {
+      const parsed = parseCardId(id);
+      return parsed.type === 'word' && parsed.elementId === wordId && card.reps > 0;
+    });
+
+  return units
+    .filter((u) => u.order < target.order)
+    .every((prior) =>
+      words.filter((w) => w.unit === prior.id && w.reviewed?.ok === true).every((w) => introduced(w.id))
+    );
+}
+
+/**
  * Ajoute une carte neuve (due aujourd'hui) pour chaque paire relue (elle et ses deux mots)
- * qui n'a pas encore de carte.
+ * qui n'a pas encore de carte, et dont l'unité des deux mots est débloquée.
  * @returns {number} le nombre de cartes ajoutées
  */
-export function seedPairCards(cardsState, pairs, wordsById, todayKey) {
+export function seedPairCards(cardsState, pairs, wordsById, todayKey, units = [], words = []) {
   let added = 0;
   for (const pair of pairs) {
     if (pair.reviewed?.ok !== true) continue;
     const wordA = wordsById.get(pair.wordA);
     const wordB = wordsById.get(pair.wordB);
     if (wordA?.reviewed?.ok !== true || wordB?.reviewed?.ok !== true) continue;
+    if (!isUnitUnlocked(wordA.unit, { units, words, cards: cardsState })) continue;
+    if (!isUnitUnlocked(wordB.unit, { units, words, cards: cardsState })) continue;
     const id = makeCardId('pair', pair.id);
     if (cardsState[id]) continue;
     cardsState[id] = { difficulty: 5, stability: 0.5, reps: 0, lapses: 0, due: todayKey };
@@ -104,15 +132,18 @@ export function seedPairCards(cardsState, pairs, wordsById, todayKey) {
 }
 
 /**
- * Ajoute une carte neuve (due aujourd'hui) pour chaque mot relu qui n'a pas encore de carte,
- * afin qu'il entre dans le cycle normal de séance (découverte puis révision espacée). Les
- * mots non relus n'obtiennent jamais de carte : ils resteront invisibles (§5.5).
+ * Ajoute une carte neuve (due aujourd'hui) pour chaque mot relu dont l'unité est débloquée
+ * et qui n'a pas encore de carte, afin qu'il entre dans le cycle normal de séance
+ * (découverte puis révision espacée). Les mots non relus n'obtiennent jamais de carte : ils
+ * resteront invisibles (§5.5). Les mots d'une unité pas encore débloquée non plus : ils
+ * attendront que l'unité précédente soit introduite en entier (§2.6).
  * @returns {number} le nombre de cartes ajoutées
  */
-export function seedWordCards(cardsState, words, todayKey) {
+export function seedWordCards(cardsState, words, todayKey, units = []) {
   let added = 0;
   for (const word of words) {
     if (word.reviewed?.ok !== true) continue;
+    if (!isUnitUnlocked(word.unit, { units, words, cards: cardsState })) continue;
     const facets = splitSyllables(word.ru).length >= 2 ? ['ecoute', 'accent', 'lecture'] : ['ecoute', 'lecture'];
     for (const facet of facets) {
       const id = makeCardId('word', word.id, facet);

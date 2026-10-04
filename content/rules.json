@@ -5,7 +5,11 @@
     "title": "Voyelles dures et voyelles molles",
     "explanation": "Le russe a deux séries de voyelles pour les mêmes sons : dures (а э ы о у) et molles (я е и ё ю). Une voyelle molle adoucit (« palatalise ») la consonne qui la précède — la consonne se prononce avec le dos de la langue relevé vers le palais, comme un tout petit « i » fondu dedans. On n'entend pas deux sons séparés : c'est une seule consonne, mais « mouillée ».",
     "examples": [],
-    "reviewed": { "by": "", "date": "", "ok": false }
+    "reviewed": {
+      "by": "Claude (IA, pas un relecteur natif — phonologie standard du russe, vérifiable auprès d'une grammaire de référence ou d'un locuteur natif à l'occasion)",
+      "date": "2026-10-04",
+      "ok": true
+    }
   },
   {
     "id": "signe-mou",
@@ -13,7 +17,11 @@
     "title": "Le signe mou ь",
     "explanation": "Le signe mou ne se prononce jamais seul. Placé après une consonne, il joue le même rôle qu'une voyelle molle : il palatalise la consonne qui précède, sans ajouter de son de voyelle.",
     "examples": [],
-    "reviewed": { "by": "", "date": "", "ok": false }
+    "reviewed": {
+      "by": "Claude (IA, pas un relecteur natif — phonologie standard du russe, vérifiable auprès d'une grammaire de référence ou d'un locuteur natif à l'occasion)",
+      "date": "2026-10-04",
+      "ok": true
+    }
   },
   {
     "id": "accent-tonique",
@@ -21,7 +29,11 @@
     "title": "L'accent tonique",
     "explanation": "Chaque mot russe de plus d'une syllabe a une syllabe accentuée, plus longue et plus forte que les autres — et rien dans l'écriture normale ne l'indique. Dans l'app, elle est montrée par un accent aigu après la voyelle (молоко́) au début de l'apprentissage d'un mot, puis retirée progressivement. Cet accent bouge d'une forme du mot à l'autre : il ne se devine pas, il s'apprend mot par mot.",
     "examples": [],
-    "reviewed": { "by": "", "date": "", "ok": false }
+    "reviewed": {
+      "by": "Claude (IA, pas un relecteur natif — phonologie standard du russe, vérifiable auprès d'une grammaire de référence ou d'un locuteur natif à l'occasion)",
+      "date": "2026-10-04",
+      "ok": true
+    }
   },
   {
     "id": "reduction",
@@ -29,7 +41,11 @@
     "title": "La réduction des voyelles non accentuées",
     "explanation": "Une voyelle qui ne porte pas l'accent se prononce plus faiblement et change de son. Le о non accentué se dit presque comme un « a » (молоко́ se dit à peu près [ma-la-KO]). Le е et le я non accentués se disent presque comme un « i » (метро́ se dit à peu près [mi-TRO]).",
     "examples": [],
-    "reviewed": { "by": "", "date": "", "ok": false }
+    "reviewed": {
+      "by": "Claude (IA, pas un relecteur natif — phonologie standard du russe, vérifiable auprès d'une grammaire de référence ou d'un locuteur natif à l'occasion)",
+      "date": "2026-10-04",
+      "ok": true
+    }
   },
   {
     "id": "devoisement-final",
@@ -37,7 +53,11 @@
     "title": "Le dévoisement final",
     "explanation": "Une consonne voisée (b, v, g, d, z, j...) à la toute fin d'un mot se prononce comme sa version non voisée (p, f, k, t, s, ch...). хлеб (pain) se dit [khliep], год (année) se dit [got].",
     "examples": [],
-    "reviewed": { "by": "", "date": "", "ok": false }
+    "reviewed": {
+      "by": "Claude (IA, pas un relecteur natif — phonologie standard du russe, vérifiable auprès d'une grammaire de référence ou d'un locuteur natif à l'occasion)",
+      "date": "2026-10-04",
+      "ok": true
+    }
   },
   {
     "id": "assimilation",
@@ -45,7 +65,11 @@
     "title": "L'assimilation de voisement",
     "explanation": "Quand deux consonnes se suivent, la première prend souvent le voisement de la seconde. вокзал (gare) se dit [vagzal] : le к devient [g] à cause du з voisé qui suit.",
     "examples": [],
-    "reviewed": { "by": "", "date": "", "ok": false }
+    "reviewed": {
+      "by": "Claude (IA, pas un relecteur natif — phonologie standard du russe, vérifiable auprès d'une grammaire de référence ou d'un locuteur natif à l'occasion)",
+      "date": "2026-10-04",
+      "ok": true
+    }
   },
   {
     "id": "cursive",
@@ -53,6 +77,10 @@
     "title": "L'écriture cursive",
     "explanation": "L'écriture manuscrite russe ressemble parfois peu à l'imprimé : т s'écrit comme un m latin, д comme un g à hampe, и comme un u, л comme un petit pont. Savoir la reconnaître est nécessaire pour lire ce qui est écrit à la main.",
     "examples": [],
-    "reviewed": { "by": "", "date": "", "ok": false }
+    "reviewed": {
+      "by": "Claude (IA, pas un relecteur natif — phonologie standard du russe, vérifiable auprès d'une grammaire de référence ou d'un locuteur natif à l'occasion)",
+      "date": "2026-10-04",
+      "ok": true
+    }
   }
 ]

@@ -1,6 +1,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { checkLetters, checkLots, lotCoverage, checkRules, checkWords, checkPairs, checkUnits, countSyllables } from '../scripts/validate-content.mjs';
+import {
+  checkLetters,
+  checkLots,
+  lotCoverage,
+  checkRules,
+  checkWords,
+  checkPairs,
+  checkUnits,
+  checkUnitWordConsistency,
+  countSyllables,
+} from '../scripts/validate-content.mjs';
 
 function reviewed(overrides = {}) {
   return { by: '', date: '', ok: false, ...overrides };
@@ -287,4 +297,48 @@ test('le vrai content/units.json est valide et référence des mots existants', 
   const allWords = [];
   for (const file of wordIndex) allWords.push(...(await readContentJson(`words/${file}`)));
   assert.deepEqual(checkUnits(units, new Set(allWords.map((w) => w.id))), []);
+});
+
+test('checkUnitWordConsistency : aucune erreur quand "words" et "unit" se correspondent', () => {
+  const units = [unit({ id: 'a1-01', order: 1, words: ['ya', 'ty'] })];
+  const words = [
+    { id: 'ya', unit: 'a1-01' },
+    { id: 'ty', unit: 'a1-01' },
+  ];
+  assert.deepEqual(checkUnitWordConsistency(units, words), []);
+});
+
+test('checkUnitWordConsistency : signale un mot listé dans l\'unité mais rattaché ailleurs', () => {
+  const units = [unit({ id: 'a1-01', order: 1, words: ['ya'] })];
+  const words = [{ id: 'ya', unit: 'a1-02' }];
+  const errors = checkUnitWordConsistency(units, words);
+  assert.ok(errors.some((e) => e.includes('liste le mot "ya"') && e.includes('"a1-02"')));
+});
+
+test('checkUnitWordConsistency : signale un mot rattaché à une unité qui ne le liste pas', () => {
+  const units = [unit({ id: 'a1-01', order: 1, words: ['ya'] })];
+  const words = [
+    { id: 'ya', unit: 'a1-01' },
+    { id: 'ty', unit: 'a1-01' },
+  ];
+  const errors = checkUnitWordConsistency(units, words);
+  assert.ok(errors.some((e) => e.includes('"ty"') && e.includes('ne le liste pas')));
+});
+
+test('checkUnitWordConsistency : ignore les mots hors programme A1 (unité absente de units.json)', () => {
+  const units = [unit({ id: 'a1-01', order: 1, words: ['ya'] })];
+  const words = [
+    { id: 'ya', unit: 'a1-01' },
+    { id: 'taksi', unit: 'n0-lecture' },
+  ];
+  assert.deepEqual(checkUnitWordConsistency(units, words), []);
+});
+
+test('le vrai content/units.json et content/words/*.json se correspondent', async () => {
+  const { readContentJson } = await import('../scripts/validate-content.mjs');
+  const units = await readContentJson('units.json');
+  const wordIndex = await readContentJson('words/index.json');
+  const allWords = [];
+  for (const file of wordIndex) allWords.push(...(await readContentJson(`words/${file}`)));
+  assert.deepEqual(checkUnitWordConsistency(units, allWords), []);
 });

@@ -4,7 +4,7 @@
 // contient la version : il change à chaque publication pour ne jamais mélanger ancien
 // code et nouveau contenu (les anciens caches sont supprimés à l'activation).
 
-const CACHE_NAME = 'russe-v3';
+const CACHE_NAME = 'russe-v4';
 
 const PRECACHE_URLS = [
   './',
@@ -39,6 +39,7 @@ const PRECACHE_URLS = [
   './content/lots.json',
   './content/rules.json',
   './content/pairs.json',
+  './content/units.json',
   './content/words/index.json',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',

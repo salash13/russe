@@ -85,11 +85,19 @@ async function boot() {
   applyTheme(app.progress.state.settings); // mode sombre/taille de texte, avant le premier rendu
   app.content = await loadContent();
 
-  // Chaque mot relu (§5.5 : reviewed.ok) qui n'a pas encore de carte en obtient une, neuve,
-  // due aujourd'hui — c'est ce qui le fait entrer dans le cycle normal de séance. Un mot non
-  // relu n'obtient jamais de carte : il reste invisible.
-  const addedWords = seedWordCards(app.progress.state.cards, app.content.words, today());
-  const addedPairs = seedPairCards(app.progress.state.cards, app.content.pairs, app.content.wordsById, today());
+  // Chaque mot relu (§5.5 : reviewed.ok) dont l'unité est débloquée (§2.6 : ordre de
+  // units.json respecté) et qui n'a pas encore de carte en obtient une, neuve, due
+  // aujourd'hui — c'est ce qui le fait entrer dans le cycle normal de séance. Un mot non
+  // relu, ou d'une unité pas encore débloquée, n'obtient jamais de carte : il reste invisible.
+  const addedWords = seedWordCards(app.progress.state.cards, app.content.words, today(), app.content.units);
+  const addedPairs = seedPairCards(
+    app.progress.state.cards,
+    app.content.pairs,
+    app.content.wordsById,
+    today(),
+    app.content.units,
+    app.content.words
+  );
   if (addedWords > 0 || addedPairs > 0) app.storage.save(app.progress.state);
 
   renderHome(app);

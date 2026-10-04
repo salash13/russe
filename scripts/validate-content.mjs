@@ -345,6 +345,42 @@ export function checkUnits(units, wordIds = new Set()) {
 }
 
 /**
+ * Vérifie que la liste "words" d'une unité et le champ "unit" de chaque mot pointent bien
+ * l'un vers l'autre. Un désaccord passerait inaperçu sans ce contrôle et casserait
+ * silencieusement le déverrouillage par unité (§2.6, src/ui/content.js#isUnitUnlocked) :
+ * un mot resterait verrouillé à tort, ou une unité ne se déverrouillerait jamais.
+ * @returns {string[]}
+ */
+export function checkUnitWordConsistency(units, words) {
+  if (!Array.isArray(units) || !Array.isArray(words)) return [];
+  const errors = [];
+  const wordsById = new Map(words.filter((w) => w?.id).map((w) => [w.id, w]));
+
+  for (const unit of units) {
+    if (!unit?.id || !Array.isArray(unit.words)) continue;
+    for (const wordId of unit.words) {
+      const word = wordsById.get(wordId);
+      if (word && word.unit !== unit.id) {
+        errors.push(
+          `units.json / "${unit.id}" liste le mot "${wordId}", mais son champ "unit" vaut "${word.unit}".`
+        );
+      }
+    }
+  }
+
+  for (const word of words) {
+    const unit = units.find((u) => u?.id === word?.unit);
+    if (unit && Array.isArray(unit.words) && !unit.words.includes(word.id)) {
+      errors.push(
+        `Le mot "${word.id}" a "unit": "${word.unit}", mais units.json / "${word.unit}" ne le liste pas dans "words".`
+      );
+    }
+  }
+
+  return errors;
+}
+
+/**
  * L'app (navigateur) ne peut pas lister un dossier : elle lit `words/index.json` pour
  * savoir quels fichiers charger. On vérifie ici qu'il ne peut jamais partir en désaccord
  * avec ce qui existe réellement sur disque (§6.2 : jamais deux sources de vérité).
@@ -452,6 +488,7 @@ async function main() {
   try {
     units = await readContentJson('units.json');
     errors.push(...checkUnits(units, new Set(seenWordIds.keys())));
+    errors.push(...checkUnitWordConsistency(units, allWords));
   } catch (e) {
     errors.push(e.message);
   }
@@ -461,6 +498,8 @@ async function main() {
     for (const lot of lotCoverage(lots)) {
       console.log(`  - Lot ${lot.id} (${lot.title}) : ${lot.count} lettres`);
     }
+    const rulesReviewed = rules.filter((r) => r.reviewed?.ok === true).length;
+    console.log(`  - Règles de lecture : ${rulesReviewed} / ${rules.length} relue(s) et visible(s).`);
     const reviewedCount = allWords.filter((w) => w.reviewed?.ok === true).length;
     console.log(`  - Mots : ${allWords.length} au total dans ${wordFiles.length} fichier(s), ${reviewedCount} relu(s) et visible(s), ${allWords.length - reviewedCount} en attente de relecture.`);
     const pairsReviewed = pairs.filter((p) => p.reviewed?.ok === true).length;
