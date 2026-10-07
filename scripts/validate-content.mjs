@@ -11,6 +11,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { sentenceTokens } from '../src/core/text.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const CONTENT_DIR = path.join(ROOT, 'content');
@@ -386,25 +387,101 @@ export function checkUnitWordConsistency(units, words) {
  * avec ce qui existe réellement sur disque (§6.2 : jamais deux sources de vérité).
  * @returns {string[]}
  */
-export function checkWordIndex(indexList, actualFileNames) {
-  if (!Array.isArray(indexList)) return ['words/index.json doit contenir un tableau de noms de fichiers.'];
+export function checkWordIndex(indexList, actualFileNames, folder = 'words') {
+  if (!Array.isArray(indexList)) return [`${folder}/index.json doit contenir un tableau de noms de fichiers.`];
   const errors = [];
   const actual = new Set(actualFileNames);
   const listed = new Set(indexList);
   for (const name of indexList) {
-    if (!actual.has(name)) errors.push(`words/index.json référence "${name}", introuvable dans content/words/.`);
+    if (!actual.has(name)) errors.push(`${folder}/index.json référence "${name}", introuvable dans content/${folder}/.`);
   }
   for (const name of actualFileNames) {
-    if (!listed.has(name)) errors.push(`content/words/${name} existe mais n'est pas listé dans words/index.json.`);
+    if (!listed.has(name)) errors.push(`content/${folder}/${name} existe mais n'est pas listé dans ${folder}/index.json.`);
   }
   return errors;
 }
 
-/** Liste et charge tous les fichiers content/words/*.json (hors index.json), triés par nom. */
-async function readAllWordFiles() {
+/**
+ * Vérifie un fichier de phrases (content/sentences/*.json, §5.4) : champs requis, "words"
+ * avec exactement une case par mot de la phrase (id de mot existant, ou null), "stress" en
+ * paires [n° du mot, n° de syllabe] dans les bornes, un accent pour chaque mot d'au moins
+ * deux syllabes (§8 : une erreur d'accent s'apprend et se grave — on n'en laisse aucun
+ * implicite), unité connue, "reviewed" bien formé. La numérotation des mots est celle de
+ * src/core/text.js#sentenceTokens, la même que l'app utilise.
+ * @returns {string[]}
+ */
+export function checkSentences(sentences, fileLabel = 'sentences.json', { wordIds = new Set(), unitIds = new Set() } = {}) {
+  if (!Array.isArray(sentences)) return [`${fileLabel} doit contenir un tableau.`];
+
+  const errors = [];
+  const ids = new Set();
+
+  for (const sentence of sentences) {
+    const label = `${fileLabel} / "${sentence?.id ?? '(sans id)'}"`;
+    if (!sentence?.id) errors.push(`${label} : champ "id" manquant.`);
+    else if (ids.has(sentence.id)) errors.push(`Identifiant de phrase dupliqué dans ${fileLabel} : "${sentence.id}".`);
+    ids.add(sentence?.id);
+
+    if (!sentence?.ru) {
+      errors.push(`${label} : champ "ru" manquant.`);
+      continue;
+    }
+    if (!sentence?.fr) errors.push(`${label} : champ "fr" manquant.`);
+    if (!sentence?.unit) errors.push(`${label} : champ "unit" manquant.`);
+    else if (unitIds.size > 0 && !unitIds.has(sentence.unit)) {
+      errors.push(`${label} : "unit" ("${sentence.unit}") absente de units.json.`);
+    }
+
+    const tokens = sentenceTokens(sentence.ru);
+
+    if (!Array.isArray(sentence.words) || sentence.words.length !== tokens.length) {
+      errors.push(`${label} : "words" doit avoir exactement ${tokens.length} case(s), une par mot (${tokens.join(' ')}).`);
+    } else if (wordIds.size > 0) {
+      for (const wordId of sentence.words) {
+        if (wordId !== null && !wordIds.has(wordId)) {
+          errors.push(`${label} : "words" référence "${wordId}", introuvable dans content/words/.`);
+        }
+      }
+    }
+
+    if (!Array.isArray(sentence.stress)) {
+      errors.push(`${label} : "stress" doit être un tableau de paires [mot, syllabe].`);
+    } else {
+      const stressed = new Set();
+      for (const pair of sentence.stress) {
+        const [position, syllable] = Array.isArray(pair) ? pair : [];
+        if (!Number.isInteger(position) || position < 1 || position > tokens.length) {
+          errors.push(`${label} : "stress" ${JSON.stringify(pair)} vise un mot inexistant (la phrase en a ${tokens.length}).`);
+          continue;
+        }
+        if (stressed.has(position)) errors.push(`${label} : "stress" donne deux accents au mot ${position}.`);
+        stressed.add(position);
+        const count = countSyllables(tokens[position - 1]);
+        if (!Number.isInteger(syllable) || syllable < 1 || syllable > count) {
+          errors.push(`${label} : "stress" ${JSON.stringify(pair)} — "${tokens[position - 1]}" n'a que ${count} syllabe(s).`);
+        }
+      }
+      tokens.forEach((token, i) => {
+        if (countSyllables(token) >= 2 && !stressed.has(i + 1)) {
+          errors.push(`${label} : accent manquant pour "${token}" (mot ${i + 1}).`);
+        }
+      });
+    }
+
+    if (sentence?.note !== undefined && typeof sentence.note !== 'string') {
+      errors.push(`${label} : "note" doit être une chaîne.`);
+    }
+    errors.push(...checkReviewedShape(sentence?.reviewed, label));
+  }
+
+  return errors;
+}
+
+/** Liste et charge tous les fichiers content/<folder>/*.json (hors index.json), triés par nom. */
+async function readAllContentFiles(folder) {
   let names;
   try {
-    names = (await readdir(path.join(CONTENT_DIR, 'words')))
+    names = (await readdir(path.join(CONTENT_DIR, folder)))
       .filter((f) => f.endsWith('.json') && f !== 'index.json')
       .sort();
   } catch {
@@ -412,7 +489,7 @@ async function readAllWordFiles() {
   }
   const files = [];
   for (const name of names) {
-    files.push({ file: `words/${name}`, data: await readContentJson(`words/${name}`) });
+    files.push({ file: `${folder}/${name}`, data: await readContentJson(`${folder}/${name}`) });
   }
   return { files, names };
 }
@@ -453,7 +530,7 @@ async function main() {
   if (lots !== null) errors.push(...checkLots(lots, letters ?? []));
   if (rules !== null) errors.push(...checkRules(rules));
 
-  const { files: wordFiles, names: wordFileNames } = await readAllWordFiles();
+  const { files: wordFiles, names: wordFileNames } = await readAllContentFiles('words');
   try {
     const wordIndex = await readContentJson('words/index.json');
     errors.push(...checkWordIndex(wordIndex, wordFileNames));
@@ -493,6 +570,29 @@ async function main() {
     errors.push(e.message);
   }
 
+  const { files: sentenceFiles, names: sentenceFileNames } = await readAllContentFiles('sentences');
+  try {
+    const sentenceIndex = await readContentJson('sentences/index.json');
+    errors.push(...checkWordIndex(sentenceIndex, sentenceFileNames, 'sentences'));
+  } catch (e) {
+    errors.push(e.message);
+  }
+  const allSentences = [];
+  const unitIds = new Set(Array.isArray(units) ? units.map((u) => u?.id) : []);
+  for (const { file, data } of sentenceFiles) {
+    errors.push(...checkSentences(data, file, { wordIds: new Set(seenWordIds.keys()), unitIds }));
+    if (Array.isArray(data)) allSentences.push(...data.map((s) => ({ ...s, __file: file })));
+  }
+  const seenSentenceIds = new Map();
+  for (const s of allSentences) {
+    if (!s.id) continue;
+    if (seenSentenceIds.has(s.id)) {
+      errors.push(`Identifiant de phrase dupliqué entre fichiers : "${s.id}" (${seenSentenceIds.get(s.id)} et ${s.__file}).`);
+    } else {
+      seenSentenceIds.set(s.id, s.__file);
+    }
+  }
+
   if (errors.length === 0) {
     console.log(`✔ Contenu valide : ${letters.length} lettres réparties en ${lots.length} lots, ${rules.length} règles de lecture.`);
     for (const lot of lotCoverage(lots)) {
@@ -504,6 +604,8 @@ async function main() {
     console.log(`  - Mots : ${allWords.length} au total dans ${wordFiles.length} fichier(s), ${reviewedCount} relu(s) et visible(s), ${allWords.length - reviewedCount} en attente de relecture.`);
     const pairsReviewed = pairs.filter((p) => p.reviewed?.ok === true).length;
     console.log(`  - Paires minimales : ${pairs.length} au total, ${pairsReviewed} relue(s) et visible(s).`);
+    const sentencesReviewed = allSentences.filter((s) => s.reviewed?.ok === true).length;
+    console.log(`  - Phrases : ${allSentences.length} au total, ${sentencesReviewed} relue(s) et visible(s).`);
     const unitsWithWords = units.filter((u) => Array.isArray(u.words) && u.words.length > 0).length;
     console.log(`  - Unités : ${units.length} planifiées, ${unitsWithWords} avec du vocabulaire écrit.`);
     process.exit(0);

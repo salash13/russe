@@ -97,5 +97,41 @@
     "unit": "a1-01", "freq": null,
     "audio": null,
     "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-10-03", "ok": true }
+  },
+  {
+    "id": "menya", "ru": "меня", "stress": 2,
+    "fr": "me / moi (« меня зовут » = je m'appelle)", "pos": "pronom",
+    "pron": "mi-NYA",
+    "forms": {},
+    "unit": "a1-01", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-10-07", "ok": true }
+  },
+  {
+    "id": "tebya", "ru": "тебя", "stress": 2,
+    "fr": "te / toi (« как тебя зовут ? » = comment tu t'appelles ?)", "pos": "pronom",
+    "pron": "ti-BYA",
+    "forms": {},
+    "unit": "a1-01", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-10-07", "ok": true }
+  },
+  {
+    "id": "khorosho", "ru": "хорошо", "stress": 3,
+    "fr": "bien", "pos": "adverbe",
+    "pron": "kha-ra-CHO",
+    "forms": {},
+    "unit": "a1-01", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-10-07", "ok": true }
+  },
+  {
+    "id": "a", "ru": "а", "stress": 1,
+    "fr": "et / mais (contraste, « а ты ? » = et toi ?)", "pos": "conjonction",
+    "pron": "A",
+    "forms": {},
+    "unit": "a1-01", "freq": null,
+    "audio": null,
+    "reviewed": { "by": "Claude (IA, pas un relecteur natif — à confirmer sur Forvo/Wiktionary à l'occasion)", "date": "2026-10-07", "ok": true }
   }
 ]

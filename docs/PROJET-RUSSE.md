@@ -428,3 +428,12 @@ le gestionnaire unique `data-act` ; zéro dépendance ; l'export JSON ; la gamif
 - **24/09/2026** — Correction : le téléphone de Ben est un **Samsung Galaxy S26 Ultra (Android)**,
   pas un iPhone. Toutes les mentions d'iPhone dans ce document étaient une supposition erronée,
   corrigées en Android/Chrome (§4.5, §6.5, §9).
+- **07/10/2026** — Phrases (§5.4) et exercices 11 (remettre dans l'ordre) et 12 (dictée).
+  Une phrase devient un type de carte `sentence:<id>:ordre|dictee` ; « ordre » seulement à
+  partir de 3 mots. Une phrase n'entre en révision qu'une fois son unité débloquée **et** tous
+  les mots du vocabulaire qu'elle référence déjà vus (§2.2). Dans `stress`, la numérotation
+  des mots ignore la ponctuation (y compris un tiret de dialogue isolé) ; tout mot d'au moins
+  deux syllabes doit avoir son accent (vérifié par le validateur) ; les monosyllabes ne sont
+  jamais marqués à l'affichage. Champ `note` facultatif, montré à la découverte et à la
+  correction. Unité 1 : 12 phrases au tutoiement + 4 mots ajoutés (меня, тебя, хорошо, а),
+  relus par Claude comme le reste (pas un natif).

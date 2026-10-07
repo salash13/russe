@@ -14,11 +14,13 @@ import {
   buildReadAloudQuestion,
   buildPairQuestion,
   buildTraceQuestion,
+  buildOrderQuestion,
+  buildDictationQuestion,
 } from '../exercises.js';
 import { questionScreenHtml } from '../questionView.js';
 import { keyboardHtml } from '../keyboard.js';
 import { playAudio, hasRussianVoice } from '../audio.js';
-import { compareAnswer, withStressMark } from '../../core/text.js';
+import { compareAnswer, compareSentence, isCorrectOrder, withStressMark, sentenceWithStress } from '../../core/text.js';
 import { composeSession, createSessionQueue } from '../../core/session.js';
 import { createCard, reviewCard, nextInterval, RATING } from '../../core/srs.js';
 import { today, addDays, diffDays } from '../../core/dates.js';
@@ -73,6 +75,7 @@ function audioWarningHtml() {
 function renderDiscovery(app, id) {
   const { type, elementId } = parseCardId(id);
   if (type === 'pair') return renderPairDiscovery(app, elementId);
+  if (type === 'sentence') return renderSentenceDiscovery(app, elementId);
   if (type === 'word') return renderWordDiscovery(app, elementId);
   return renderLetterDiscovery(app, elementId);
 }
@@ -142,6 +145,28 @@ function renderPairDiscovery(app, elementId) {
   `;
 }
 
+/**
+ * Fiche de découverte d'une phrase (§2.2) : la phrase accentuée (§2.7, selon le réglage),
+ * sa traduction, et la note qui explique la tournure (« меня зовут » = « on m'appelle »).
+ */
+function renderSentenceDiscovery(app, elementId) {
+  const sentence = app.content.sentencesById.get(elementId);
+  const showStress = app.progress.state.settings.showStress !== 'never';
+  app.runtime.audioText = sentence.ru;
+
+  appRoot().innerHTML = `
+    <section class="screen screen-discovery" aria-live="polite">
+      <p class="prompt-sentence" lang="ru">${h(showStress ? sentenceWithStress(sentence.ru, sentence.stress) : sentence.ru)}</p>
+      <p class="letter-sound">${h(sentence.fr)}</p>
+      ${sentence.note ? `<p class="sentence-note">💡 ${h(sentence.note)}</p>` : ''}
+      <button type="button" class="btn-audio" data-act="play-audio" aria-label="Écouter">🔊</button>
+      ${audioWarningHtml()}
+      <button type="button" class="btn-primary" data-act="reveal">Je suis prêt</button>
+    </section>
+  `;
+  playAudio(app.progress.state.settings, sentence.ru);
+}
+
 export function onSessionReveal(app) {
   app.runtime.discovered.add(app.runtime.currentCardId);
   renderQuestion(app, app.runtime.currentCardId);
@@ -167,6 +192,28 @@ function renderQuestion(app, id) {
     app.runtime.currentQuestion = question;
     app.runtime.audioText = question.audioText;
     appRoot().innerHTML = questionScreenHtml(question, { progressLabel, act: 'answer' });
+    playAudio(app.progress.state.settings, question.audioText);
+    return;
+  }
+
+  if (type === 'sentence' && facet === 'ordre') {
+    const sentence = app.content.sentencesById.get(elementId);
+    const question = buildOrderQuestion(sentence);
+    app.runtime.currentQuestion = question;
+    app.runtime.orderPicked = [];
+    // Pas d'audio ici : l'entendre donnerait l'ordre des mots. Il est joué avec la correction.
+    app.runtime.audioText = null;
+    app.runtime.progressLabel = progressLabel;
+    renderOrderScreen(app);
+    return;
+  }
+
+  if (type === 'sentence' && facet === 'dictee') {
+    const sentence = app.content.sentencesById.get(elementId);
+    const question = buildDictationQuestion(sentence);
+    app.runtime.currentQuestion = question;
+    app.runtime.audioText = question.audioText;
+    renderTypingScreen(question, progressLabel);
     playAudio(app.progress.state.settings, question.audioText);
     return;
   }
@@ -206,6 +253,68 @@ function renderQuestion(app, id) {
   app.runtime.audioText = question.audioText ?? null;
   appRoot().innerHTML = questionScreenHtml(question, { progressLabel, act: 'answer' });
   if (question.audioText) playAudio(app.progress.state.settings, question.audioText);
+}
+
+/**
+ * Exercice 11 (§4.2) : toucher les tuiles dans l'ordre pour construire la phrase ; toucher
+ * une tuile déjà placée la renvoie dans la réserve. Une tuile placée laisse sa place vide
+ * dans la réserve (au lieu de disparaître) pour que les autres ne bougent pas sous le doigt.
+ */
+function renderOrderScreen(app) {
+  const question = app.runtime.currentQuestion;
+  const picked = app.runtime.orderPicked;
+  const complete = picked.length === question.tiles.length;
+
+  appRoot().innerHTML = `
+    <section class="screen screen-question" aria-live="polite">
+      <p class="session-progress">${h(app.runtime.progressLabel)}</p>
+      <p class="sentence-fr">« ${h(question.fr)} »</p>
+      <h2 class="question-text">${h(question.label)}</h2>
+      <div class="order-answer" role="group" aria-label="Ta phrase">
+        ${
+          picked.length === 0
+            ? `<span class="order-placeholder">Touche les mots ci-dessous</span>`
+            : picked
+                .map(
+                  (tileIndex, i) => `
+          <button type="button" class="tile" data-act="order-unpick" data-index="${i}" lang="ru"
+            aria-label="Retirer ${h(question.tiles[tileIndex])}">${h(question.tiles[tileIndex])}</button>`
+                )
+                .join('')
+        }
+      </div>
+      <div class="order-pool" role="group" aria-label="Mots à placer">
+        ${question.tiles
+          .map((tile, i) =>
+            picked.includes(i)
+              ? `<span class="tile tile-used" aria-hidden="true">${h(tile)}</span>`
+              : `<button type="button" class="tile" data-act="order-pick" data-index="${i}" lang="ru">${h(tile)}</button>`
+          )
+          .join('')}
+      </div>
+      <button type="button" class="btn-primary" data-act="submit-order"${complete ? '' : ' disabled'}>Valider</button>
+    </section>
+  `;
+}
+
+export function onOrderPick(app, tileIndex) {
+  if (!app.runtime.orderPicked.includes(tileIndex)) app.runtime.orderPicked.push(tileIndex);
+  renderOrderScreen(app);
+}
+
+export function onOrderUnpick(app, position) {
+  app.runtime.orderPicked.splice(position, 1);
+  renderOrderScreen(app);
+}
+
+/** Valide l'exercice 11, puis fait entendre la phrase correcte avec la correction. */
+export function onSessionSubmitOrder(app) {
+  const question = app.runtime.currentQuestion;
+  const answer = app.runtime.orderPicked.map((i) => question.tiles[i]);
+  if (answer.length !== question.tiles.length) return;
+  app.runtime.pendingCorrect = isCorrectOrder(answer, question.sentence);
+  renderFeedback(app, app.runtime.pendingCorrect, question);
+  playAudio(app.progress.state.settings, question.audioText);
 }
 
 /** Exercice 4 (§4.2) : toucher la syllabe accentuée. Une syllabe = un bouton, réponse immédiate. */
@@ -301,11 +410,15 @@ export function onSessionAccentAnswer(app, index) {
   renderFeedback(app, app.runtime.pendingCorrect, question);
 }
 
-/** Valide la saisie de l'exercice 7, avec la tolérance de core/text.js#compareAnswer. */
+/**
+ * Valide la saisie de l'exercice 7 (un mot) ou 12 (une phrase, ponctuation ignorée), avec
+ * la tolérance de core/text.js.
+ */
 export function onSessionSubmitTyped(app) {
   const input = document.getElementById('word-input');
   const question = app.runtime.currentQuestion;
-  const result = compareAnswer(input?.value ?? '', question.expected);
+  const compare = question.kind === 'dictee' ? compareSentence : compareAnswer;
+  const result = compare(input?.value ?? '', question.expected);
   app.runtime.pendingCorrect = result.correct;
   renderFeedback(app, result.correct, question, result);
 }
@@ -326,6 +439,12 @@ function renderFeedback(app, correct, question, result = null) {
   const suggested = correct === false ? RATING.AGAIN : RATING.GOOD;
   let statusLine;
   let toneClass;
+  let detailHtml = '';
+  if (result?.latin) {
+    detailHtml += `<p class="feedback-detail">⌨️ Certaines lettres ont été tapées avec le clavier de
+      l'ordinateur (lettres latines) : elles ont la même forme que les russes, alors je les ai
+      comptées justes. Le clavier russe à l'écran évite la confusion.</p>`;
+  }
   if (correct === null) {
     statusLine = `${question.explanation} Comment ça s'est passé ?`;
     toneClass = 'feedback-neutral';
@@ -335,6 +454,7 @@ function renderFeedback(app, correct, question, result = null) {
   } else if (question.expected && result?.close) {
     statusLine = `✎ Presque : la bonne réponse est « ${question.expected} ». ${question.explanation}`;
     toneClass = 'feedback-ko';
+    detailHtml = differenceHtml(result.diff) + detailHtml;
   } else if (question.expected) {
     statusLine = `✖ Pas tout à fait : la bonne réponse est « ${question.expected} ». ${question.explanation}`;
     toneClass = 'feedback-ko';
@@ -346,6 +466,7 @@ function renderFeedback(app, correct, question, result = null) {
   appRoot().innerHTML = `
     <section class="screen screen-feedback" role="status" aria-live="polite">
       <p class="feedback ${toneClass}">${h(statusLine)}</p>
+      ${detailHtml}
       <div class="choices" role="group" aria-label="Note">
         ${RATING_LABELS.map(
           ([value, label]) => `
@@ -357,6 +478,20 @@ function renderFeedback(app, correct, question, result = null) {
       </div>
     </section>
   `;
+}
+
+/**
+ * Le « presque » du §4.2 montre la différence : ce qui a été tapé et ce qui était attendu,
+ * la partie en cause surlignée de chaque côté (un trait « _ » quand une lettre manque).
+ */
+function differenceHtml(diff) {
+  if (!diff) return '';
+  const mark = (text) => `<mark>${h(text || '_')}</mark>`;
+  return `
+    <p class="feedback-detail feedback-diff" lang="ru">
+      <span>Tu as écrit : ${h(diff.before)}${mark(diff.typed)}${h(diff.after)}</span>
+      <span>Attendu : ${h(diff.before)}${mark(diff.expected)}${h(diff.after)}</span>
+    </p>`;
 }
 
 export function onSessionRate(app, rating) {

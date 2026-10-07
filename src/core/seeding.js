@@ -7,7 +7,7 @@
 // données depuis lesquelles elle décide.
 
 import { makeCardId, parseCardId } from './cards.js';
-import { splitSyllables } from './text.js';
+import { splitSyllables, sentenceTokens } from './text.js';
 
 /**
  * Une unité absente de units.json (ex. "n0-lecture", "n0-pairs" : contenu de lecture
@@ -72,6 +72,46 @@ export function seedWordCards(cardsState, words, todayKey, units = []) {
     const facets = splitSyllables(word.ru).length >= 2 ? ['ecoute', 'accent', 'lecture'] : ['ecoute', 'lecture'];
     for (const facet of facets) {
       const id = makeCardId('word', word.id, facet);
+      if (cardsState[id]) continue;
+      cardsState[id] = { difficulty: 5, stability: 0.5, reps: 0, lapses: 0, due: todayKey };
+      added++;
+    }
+  }
+  return added;
+}
+
+/** Nombre minimal de mots pour que « remettre dans l'ordre » (exercice 11) ait un sens. */
+export const MIN_TOKENS_FOR_ORDER = 3;
+
+/** Les facettes d'une phrase : la dictée toujours, l'ordre seulement à partir de 3 mots. */
+export function sentenceFacets(sentence) {
+  return sentenceTokens(sentence.ru).length >= MIN_TOKENS_FOR_ORDER ? ['ordre', 'dictee'] : ['dictee'];
+}
+
+/**
+ * Ajoute une carte neuve (due aujourd'hui) pour chaque facette de chaque phrase relue
+ * (§5.5) dont l'unité est débloquée (§2.6) et dont tous les mots du vocabulaire qu'elle
+ * référence (champ "words", §5.4) ont déjà été introduits au moins une fois : on ne fait
+ * pas remettre dans l'ordre une phrase faite de mots jamais vus (§2.2). Les mots marqués
+ * null (prénom, tournure expliquée dans la note de la phrase) ne bloquent rien.
+ * @returns {number} le nombre de cartes ajoutées
+ */
+export function seedSentenceCards(cardsState, sentences, words, todayKey, units = []) {
+  const wordsById = new Map(words.map((w) => [w.id, w]));
+  const introduced = (wordId) =>
+    Object.entries(cardsState).some(([id, card]) => {
+      const parsed = parseCardId(id);
+      return parsed.type === 'word' && parsed.elementId === wordId && card.reps > 0;
+    });
+
+  let added = 0;
+  for (const sentence of sentences) {
+    if (sentence.reviewed?.ok !== true) continue;
+    if (!isUnitUnlocked(sentence.unit, { units, words, cards: cardsState })) continue;
+    const wordIds = (sentence.words ?? []).filter((id) => id != null);
+    if (!wordIds.every((id) => wordsById.get(id)?.reviewed?.ok === true && introduced(id))) continue;
+    for (const facet of sentenceFacets(sentence)) {
+      const id = makeCardId('sentence', sentence.id, facet);
       if (cardsState[id]) continue;
       cardsState[id] = { difficulty: 5, stability: 0.5, reps: 0, lapses: 0, due: todayKey };
       added++;

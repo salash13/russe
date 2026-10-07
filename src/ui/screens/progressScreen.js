@@ -22,7 +22,7 @@ import {
 import { parseCardId } from '../../core/cards.js';
 import { DEFAULT_OVERDUE_LIMIT_DAYS } from '../../core/session.js';
 
-const TYPE_LABELS = { letter: 'Lettres', word: 'Mots', pair: 'Paires minimales' };
+const TYPE_LABELS = { letter: 'Lettres', word: 'Mots', pair: 'Paires minimales', sentence: 'Phrases' };
 const MONTH_NAMES = [
   'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
   'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre',
@@ -84,6 +84,10 @@ function describeCard(app, id) {
     const wordB = app.content.wordsById.get(pair.wordB);
     return `${wordA?.ru ?? '?'} / ${wordB?.ru ?? '?'}`;
   }
+  if (type === 'sentence') {
+    const sentence = app.content.sentencesById.get(elementId);
+    return sentence ? `${sentence.ru} — ${sentence.fr}` : id;
+  }
   return id;
 }
 
@@ -102,13 +106,13 @@ function calendarHtml(monthKeyStr, practicedSet) {
 
 /** Combien d'éléments distincts (une lettre/un mot/une paire compte une fois) sont déjà pratiqués. */
 function countByType(cards) {
-  const seen = { letter: new Set(), word: new Set(), pair: new Set() };
+  const seen = { letter: new Set(), word: new Set(), pair: new Set(), sentence: new Set() };
   for (const [id, card] of Object.entries(cards)) {
     if (card.reps === 0) continue;
     const { type, elementId } = parseCardId(id);
     seen[type]?.add(elementId);
   }
-  return { letters: seen.letter.size, words: seen.word.size, pairs: seen.pair.size };
+  return { letters: seen.letter.size, words: seen.word.size, pairs: seen.pair.size, sentences: seen.sentence.size };
 }
 
 /**
@@ -143,6 +147,7 @@ export function renderProgress(app, monthOverride) {
   const totalLetters = app.content.letters.length;
   const totalWords = app.content.words.length;
   const totalPairs = app.content.pairs.length;
+  const totalSentences = app.content.sentences.filter((s) => s.reviewed?.ok === true).length;
 
   const minutesByDay = state.stats.minutesByDay ?? {};
   const minutesThisMonth = Object.entries(minutesByDay)
@@ -196,6 +201,7 @@ export function renderProgress(app, monthOverride) {
           ${meterRow('Lettres', byType.letters, totalLetters)}
           ${meterRow('Mots', byType.words, totalWords)}
           ${meterRow('Paires minimales', byType.pairs, totalPairs)}
+          ${meterRow('Phrases', byType.sentences, totalSentences)}
         </div>
       </div>
 

@@ -7,35 +7,43 @@
 
 import { registerCardType } from '../core/cards.js';
 import { splitSyllables } from '../core/text.js';
+import { sentenceFacets } from '../core/seeding.js';
 
 let cache = null;
 
 /**
  * Charge (une seule fois) letters.json, lots.json, rules.json, pairs.json, units.json et
- * tous les fichiers de content/words/ (listés dans words/index.json — le navigateur ne peut
- * pas lister un dossier lui-même), et enregistre les types de carte "letter", "word" et "pair".
+ * tous les fichiers de content/words/ et content/sentences/ (listés dans leur index.json — le
+ * navigateur ne peut pas lister un dossier lui-même), et enregistre les types de carte
+ * "letter", "word", "pair" et "sentence".
  */
 export async function loadContent() {
   if (cache) return cache;
 
-  const [letters, lots, rules, pairs, units, wordIndex] = await Promise.all([
+  const [letters, lots, rules, pairs, units, wordIndex, sentenceIndex] = await Promise.all([
     fetch('content/letters.json').then((r) => r.json()),
     fetch('content/lots.json').then((r) => r.json()),
     fetch('content/rules.json').then((r) => r.json()),
     fetch('content/pairs.json').then((r) => r.json()),
     fetch('content/units.json').then((r) => r.json()),
     fetch('content/words/index.json').then((r) => r.json()),
+    fetch('content/sentences/index.json').then((r) => r.json()),
   ]);
 
   const wordFiles = await Promise.all(
     wordIndex.map((name) => fetch(`content/words/${name}`).then((r) => r.json()))
   );
   const words = wordFiles.flat();
+  const sentenceFiles = await Promise.all(
+    sentenceIndex.map((name) => fetch(`content/sentences/${name}`).then((r) => r.json()))
+  );
+  const sentences = sentenceFiles.flat();
 
   const lettersById = new Map(letters.map((l) => [l.id, l]));
   const wordsById = new Map(words.map((w) => [w.id, w]));
   const pairsById = new Map(pairs.map((p) => [p.id, p]));
-  cache = { letters, lots, rules, words, pairs, units, lettersById, wordsById, pairsById };
+  const sentencesById = new Map(sentences.map((s) => [s.id, s]));
+  cache = { letters, lots, rules, words, pairs, units, sentences, lettersById, wordsById, pairsById, sentencesById };
 
   // Une carte "letter:<id>:son", "letter:<id>:lettre" ou "letter:<id>:cursive" (exercice 5,
   // reconnaître la cursive) ne peut être présentée que si la lettre existe encore dans le
@@ -80,6 +88,20 @@ export async function loadContent() {
       const wordA = wordsById.get(pair.wordA);
       const wordB = wordsById.get(pair.wordB);
       return wordA?.reviewed?.ok === true && wordB?.reviewed?.ok === true;
+    },
+  });
+
+  // Une carte "sentence:<id>:ordre" (exercice 11, remettre les mots dans l'ordre) ou
+  // "sentence:<id>:dictee" (exercice 12, dictée) ne peut être présentée que si la phrase
+  // existe et a été relue (§5.5), et que la facette fait partie de celles que
+  // core/seeding.js#sentenceFacets lui donne — la même fonction décide de la création des
+  // cartes et de leur présentation, elles ne peuvent pas diverger (§4.3).
+  registerCardType('sentence', {
+    facets: ['ordre', 'dictee'],
+    canPresent: (parsed) => {
+      const sentence = sentencesById.get(parsed.elementId);
+      if (!sentence || sentence.reviewed?.ok !== true) return false;
+      return sentenceFacets(sentence).includes(parsed.facet);
     },
   });
 

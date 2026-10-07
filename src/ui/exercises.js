@@ -6,6 +6,7 @@
 //   4 (où est l'accent ?), pour un mot
 //   7 (taper le mot entendu), pour un mot
 //   8 (paires minimales audio), pour une paire
+//   11 (remettre les mots dans l'ordre) et 12 (dictée), pour une phrase
 //
 // Piège trouvé en diagnostiquant avec Ben (25/09/2026, mesuré via `say` : ~1,3s contre
 // ~0,3s) : demander à la synthèse vocale de lire une lettre MAJUSCULE isolée la fait épeler
@@ -13,7 +14,7 @@
 // isolée donne juste le son attendu. Le texte donné à la synthèse pour une lettre utilise
 // donc toujours la minuscule (audio.js#speak), jamais la majuscule.
 
-import { splitSyllables, withStressMark } from '../core/text.js';
+import { splitSyllables, withStressMark, sentenceTokens } from '../core/text.js';
 
 function shuffle(array) {
   const copy = [...array];
@@ -175,5 +176,63 @@ export function buildAccentQuestion(word) {
     // Affiché dans le feedback en cas d'erreur : la syllabe accentuée en majuscules.
     expected: syllables.map((s, i) => (i === correctIndex ? s.toUpperCase() : s)).join('-'),
     explanation: `${word.ru} — ${word.fr}`,
+  };
+}
+
+/** Ce que le feedback d'une phrase explique (§2.4) : la traduction, puis la note s'il y en a une. */
+function sentenceExplanation(sentence) {
+  return sentence.note ? `${sentence.fr} — ${sentence.note}` : sentence.fr;
+}
+
+/**
+ * Les tuiles de l'exercice 11, dans l'ordre de la phrase. Un mot qui ouvre une phrase perd
+ * sa majuscule : sinon la tuile « Меня » ou « А » donnerait d'emblée le début de chaque
+ * phrase. Les noms propres ailleurs (« Бен ») gardent la leur.
+ */
+function orderTiles(ru) {
+  const tiles = [];
+  let startsSentence = true;
+  for (const chunk of ru.split(/\s+/)) {
+    const [token] = sentenceTokens(chunk);
+    if (token) tiles.push(startsSentence ? token.charAt(0).toLowerCase() + token.slice(1) : token);
+    if (/[.!?…]$/.test(chunk)) startsSentence = true;
+    else if (token) startsSentence = false;
+  }
+  return tiles;
+}
+
+/**
+ * Exercice 11 (§4.2) : remettre les mots d'une phrase dans l'ordre, la traduction française
+ * servant de guide. Les tuiles sont mélangées, jamais présentées déjà dans le bon ordre.
+ * @param {object} sentence - une entrée de content/sentences/*.json (au moins 3 mots)
+ */
+export function buildOrderQuestion(sentence) {
+  const tiles = orderTiles(sentence.ru);
+  let shuffled = shuffle(tiles);
+  for (let tries = 0; tries < 10 && shuffled.join(' ') === tiles.join(' '); tries++) shuffled = shuffle(tiles);
+  return {
+    kind: 'ordre',
+    label: 'Remets les mots dans l\'ordre',
+    fr: sentence.fr,
+    tiles: shuffled,
+    sentence: sentence.ru,
+    audioText: sentence.ru,
+    expected: sentence.ru,
+    explanation: sentenceExplanation(sentence),
+  };
+}
+
+/**
+ * Exercice 12 (§4.2) : écouter une phrase et l'écrire. La ponctuation est ignorée à la
+ * correction (core/text.js#compareSentence), en plus de la tolérance habituelle.
+ * @param {object} sentence - une entrée de content/sentences/*.json
+ */
+export function buildDictationQuestion(sentence) {
+  return {
+    kind: 'dictee',
+    audioText: sentence.ru,
+    label: 'Écoute et écris la phrase',
+    expected: sentence.ru,
+    explanation: sentenceExplanation(sentence),
   };
 }

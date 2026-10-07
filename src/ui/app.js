@@ -9,7 +9,7 @@ import { createStorage } from '../core/storage.js';
 import { today } from '../core/dates.js';
 import { appRoot } from './dom.js';
 import { loadContent } from './content.js';
-import { seedWordCards, seedPairCards } from '../core/seeding.js';
+import { seedWordCards, seedPairCards, seedSentenceCards } from '../core/seeding.js';
 import { primeVoices } from './audio.js';
 import { insertChar, backspace } from './keyboard.js';
 import { applyTheme } from './theme.js';
@@ -32,6 +32,9 @@ import {
   replayCurrentAudio,
   onPlayWord,
   onTraceReveal,
+  onOrderPick,
+  onOrderUnpick,
+  onSessionSubmitOrder,
 } from './screens/sessionScreen.js';
 
 const backend = {
@@ -86,23 +89,27 @@ async function boot() {
   }
   applyTheme(app.progress.state.settings); // mode sombre/taille de texte, avant le premier rendu
   app.content = await loadContent();
-
-  // Chaque mot relu (§5.5 : reviewed.ok) dont l'unité est débloquée (§2.6 : ordre de
-  // units.json respecté) et qui n'a pas encore de carte en obtient une, neuve, due
-  // aujourd'hui — c'est ce qui le fait entrer dans le cycle normal de séance. Un mot non
-  // relu, ou d'une unité pas encore débloquée, n'obtient jamais de carte : il reste invisible.
-  const addedWords = seedWordCards(app.progress.state.cards, app.content.words, today(), app.content.units);
-  const addedPairs = seedPairCards(
-    app.progress.state.cards,
-    app.content.pairs,
-    app.content.wordsById,
-    today(),
-    app.content.units,
-    app.content.words
-  );
-  if (addedWords > 0 || addedPairs > 0) app.storage.save(app.progress.state);
-
+  seedNewCards();
   renderHome(app);
+}
+
+/**
+ * Chaque mot relu (§5.5 : reviewed.ok) dont l'unité est débloquée (§2.6 : ordre de
+ * units.json respecté) et qui n'a pas encore de carte en obtient une, neuve, due
+ * aujourd'hui — c'est ce qui le fait entrer dans le cycle normal de séance. Un mot non
+ * relu, ou d'une unité pas encore débloquée, n'obtient jamais de carte : il reste invisible.
+ * Les phrases attendent en plus que leurs mots aient été vus : d'où un nouvel appel avant
+ * chaque séance, pour qu'un mot découvert le matin débloque ses phrases dès la séance
+ * suivante, sans devoir relancer l'app.
+ */
+function seedNewCards() {
+  const { cards } = app.progress.state;
+  const { words, pairs, sentences, units, wordsById } = app.content;
+  const added =
+    seedWordCards(cards, words, today(), units) +
+    seedPairCards(cards, pairs, wordsById, today(), units, words) +
+    seedSentenceCards(cards, sentences, words, today(), units);
+  if (added > 0) app.storage.save(app.progress.state);
 }
 
 document.addEventListener('click', (event) => {
@@ -123,6 +130,7 @@ document.addEventListener('click', (event) => {
       onPlacementAnswer(app, el.dataset.choice);
       break;
     case 'start-session':
+      seedNewCards();
       startSession(app);
       break;
     case 'answer':
@@ -133,6 +141,15 @@ document.addEventListener('click', (event) => {
       break;
     case 'submit-typed':
       onSessionSubmitTyped(app);
+      break;
+    case 'order-pick':
+      onOrderPick(app, Number(el.dataset.index));
+      break;
+    case 'order-unpick':
+      onOrderUnpick(app, Number(el.dataset.index));
+      break;
+    case 'submit-order':
+      onSessionSubmitOrder(app);
       break;
     case 'reveal-read':
       onReadAloudReveal(app);
@@ -281,6 +298,15 @@ document.addEventListener('input', (event) => {
   }
 });
 
+// Pas de copier-coller dans le champ de réponse (exercices 7 et 12) : le mot russe affiché
+// sur la fiche de découverte ou la correction pouvait être collé tel quel (trouvé par Ben),
+// et l'exercice ne testait plus rien. Le glisser-déposer d'un texte sélectionné aussi.
+for (const type of ['paste', 'drop']) {
+  document.addEventListener(type, (event) => {
+    if (event.target.closest?.('#word-input')) event.preventDefault();
+  });
+}
+
 // Clavier (§4.5) : 1-4 pour choisir, Espace pour rejouer l'audio, Entrée pour valider une
 // saisie. Les raccourcis 1-4 et Espace sont désactivés pendant la frappe dans le champ de
 // saisie (exercice 7), sinon ils empêcheraient de taper ces caractères-là.
@@ -296,7 +322,7 @@ document.addEventListener('keydown', (event) => {
       btn.click();
     }
   } else if (event.key === 'Enter') {
-    const submit = document.querySelector('[data-act="submit-typed"]');
+    const submit = document.querySelector('[data-act="submit-typed"], [data-act="submit-order"]:not([disabled])');
     if (submit) {
       event.preventDefault();
       submit.click();

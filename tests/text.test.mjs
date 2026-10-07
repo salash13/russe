@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { stripStress, normalize, levenshtein, compareAnswer, splitSyllables, withStressMark } from '../src/core/text.js';
+import { stripStress, normalize, levenshtein, compareAnswer, splitSyllables, withStressMark, diffParts } from '../src/core/text.js';
 
 test('stripStress retire l\'accent aigu combinant', () => {
   assert.equal(stripStress('молоко́'), 'молоко');
@@ -78,4 +78,29 @@ test('withStressMark : stripStress annule withStressMark', () => {
   for (const [word, stress] of [['мама', 1], ['ресторан', 3], ['такси', 2]]) {
     assert.equal(stripStress(withStressMark(word, stress)), word);
   }
+});
+
+test('compareAnswer : une lettre latine identique à la cyrillique est acceptée, et signalée', () => {
+  // « такси » avec un « а » et un « с » latins (clavier de l'ordinateur) : identique à l'œil.
+  const result = compareAnswer('тaкcи', 'такси');
+  assert.equal(result.correct, true);
+  assert.equal(result.latin, true);
+  assert.equal(compareAnswer('такси', 'такси').latin, false);
+  // Majuscules latines aussi (« ТАКСИ » tapé en partie au clavier latin).
+  assert.equal(compareAnswer('TAKCИ', 'такси').correct, true);
+});
+
+test("compareAnswer : une lettre latine qui ne ressemble pas reste une faute", () => {
+  assert.equal(compareAnswer('taksi', 'такси').correct, false);
+});
+
+test('compareAnswer : le « presque » donne la partie différente', () => {
+  const result = compareAnswer('такса', 'такси');
+  assert.equal(result.close, true);
+  assert.deepEqual(result.diff, { before: 'такс', typed: 'а', expected: 'и', after: '' });
+});
+
+test('diffParts : lettre oubliée ou en trop', () => {
+  assert.deepEqual(diffParts('таки', 'такси'), { before: 'так', typed: '', expected: 'с', after: 'и' });
+  assert.deepEqual(diffParts('таксси', 'такси'), { before: 'такс', typed: 'с', expected: '', after: 'и' });
 });

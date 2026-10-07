@@ -4,7 +4,7 @@
 // contient la version : il change à chaque publication pour ne jamais mélanger ancien
 // code et nouveau contenu (les anciens caches sont supprimés à l'activation).
 
-const CACHE_NAME = 'russe-v6';
+const CACHE_NAME = 'russe-v9';
 
 const PRECACHE_URLS = [
   './',
@@ -43,20 +43,21 @@ const PRECACHE_URLS = [
   './content/pairs.json',
   './content/units.json',
   './content/words/index.json',
+  './content/sentences/index.json',
   './assets/icons/icon-192.png',
   './assets/icons/icon-512.png',
   './assets/icons/favicon.svg',
   './assets/fonts/bad-script-cyrillic.woff2',
 ];
 
-// Les fichiers de mots ne sont pas listés en dur ici : on lit words/index.json (la même
-// liste que content.js utilise) pour précharger tout ce qu'il contient, sans dupliquer
-// cette liste à un deuxième endroit (§6.2 : jamais deux sources de vérité).
-async function precacheWordFiles(cache) {
+// Les fichiers de mots et de phrases ne sont pas listés en dur ici : on lit leur index.json
+// (la même liste que content.js utilise) pour précharger tout ce qu'il contient, sans
+// dupliquer cette liste à un deuxième endroit (§6.2 : jamais deux sources de vérité).
+async function precacheIndexedFiles(cache, folder) {
   try {
-    const res = await fetch('./content/words/index.json');
+    const res = await fetch(`./content/${folder}/index.json`);
     const names = await res.json();
-    await cache.addAll(names.map((name) => `./content/words/${name}`));
+    await cache.addAll(names.map((name) => `./content/${folder}/${name}`));
   } catch {
     // Pas grave si ça échoue à l'installation : le réseau-d'abord du fetch handler
     // remplira le cache à la première visite en ligne.
@@ -69,7 +70,8 @@ self.addEventListener('install', (event) => {
       .open(CACHE_NAME)
       .then(async (cache) => {
         await cache.addAll(PRECACHE_URLS);
-        await precacheWordFiles(cache);
+        await precacheIndexedFiles(cache, 'words');
+        await precacheIndexedFiles(cache, 'sentences');
       })
       .then(() => self.skipWaiting())
   );

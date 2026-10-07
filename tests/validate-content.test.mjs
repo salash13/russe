@@ -10,6 +10,8 @@ import {
   checkUnits,
   checkUnitWordConsistency,
   countSyllables,
+  checkSentences,
+  readContentJson,
 } from '../scripts/validate-content.mjs';
 
 function reviewed(overrides = {}) {
@@ -341,4 +343,48 @@ test('le vrai content/units.json et content/words/*.json se correspondent', asyn
   const allWords = [];
   for (const file of wordIndex) allWords.push(...(await readContentJson(`words/${file}`)));
   assert.deepEqual(checkUnitWordConsistency(units, allWords), []);
+});
+
+function sentence(overrides = {}) {
+  return {
+    id: 's1', ru: 'Меня зовут Бен.', stress: [[1, 2], [2, 2], [3, 1]], fr: "Je m'appelle Ben.",
+    words: [null, null, null], unit: 'a1-01', reviewed: { by: '', date: '', ok: false }, ...overrides,
+  };
+}
+
+test('checkSentences : accepte une phrase bien formée', () => {
+  assert.deepEqual(checkSentences([sentence()], 'x.json', { unitIds: new Set(['a1-01']) }), []);
+});
+
+test('checkSentences : "words" doit avoir une case par mot', () => {
+  const errors = checkSentences([sentence({ words: [null, null] })]);
+  assert.ok(errors.some((e) => e.includes('"words"')));
+});
+
+test('checkSentences : signale un mot référencé introuvable', () => {
+  const errors = checkSentences([sentence({ words: ['inconnu', null, null] })], 'x.json', { wordIds: new Set(['menya']) });
+  assert.ok(errors.some((e) => e.includes('inconnu')));
+});
+
+test("checkSentences : accent hors bornes ou manquant sur un mot d'au moins 2 syllabes", () => {
+  assert.ok(checkSentences([sentence({ stress: [[1, 3], [2, 2]] })]).some((e) => e.includes('syllabe')));
+  assert.ok(checkSentences([sentence({ stress: [[2, 2]] })]).some((e) => e.includes('accent manquant')));
+  assert.ok(checkSentences([sentence({ stress: [[1, 2], [2, 2], [9, 1]] })]).some((e) => e.includes('mot inexistant')));
+});
+
+test('checkSentences : unité inconnue', () => {
+  const errors = checkSentences([sentence({ unit: 'a1-99' })], 'x.json', { unitIds: new Set(['a1-01']) });
+  assert.ok(errors.some((e) => e.includes('a1-99')));
+});
+
+test('les vraies phrases de content/sentences/ sont valides', async () => {
+  const index = await readContentJson('sentences/index.json');
+  const units = await readContentJson('units.json');
+  const wordIndex = await readContentJson('words/index.json');
+  const wordIds = new Set();
+  for (const name of wordIndex) for (const w of await readContentJson(`words/${name}`)) wordIds.add(w.id);
+  for (const name of index) {
+    const data = await readContentJson(`sentences/${name}`);
+    assert.deepEqual(checkSentences(data, name, { wordIds, unitIds: new Set(units.map((u) => u.id)) }), []);
+  }
 });

@@ -31,6 +31,23 @@ export function withStressMark(word, stress) {
   return word; // "stress" hors bornes : ne devrait pas arriver sur du contenu validé
 }
 
+// Lettres latines qui ont exactement la même forme qu'une lettre cyrillique. Tapées avec le
+// clavier de l'ordinateur au lieu du clavier russe à l'écran, elles sont invisibles à l'œil
+// mais ce sont d'autres caractères : sans cette table, « такси » écrit avec un « c » latin
+// était compté faux, sans que rien à l'écran ne permette de comprendre pourquoi (signalé par
+// Ben le 07/10/2026). Seules les formes vraiment identiques sont converties : un « b » ou un
+// « t » minuscules ne ressemblent pas à в ou т, ils restent des fautes.
+const LATIN_LOOKALIKES = {
+  A: 'А', B: 'В', C: 'С', E: 'Е', H: 'Н', K: 'К', M: 'М', O: 'О', P: 'Р', T: 'Т', X: 'Х', Y: 'У',
+  a: 'а', c: 'с', e: 'е', k: 'к', o: 'о', p: 'р', x: 'х', y: 'у',
+};
+const LATIN_LOOKALIKE_RE = new RegExp(`[${Object.keys(LATIN_LOOKALIKES).join('')}]`, 'g');
+
+/** Remplace les lettres latines identiques à une lettre cyrillique par cette lettre. */
+export function fixLatinLookalikes(text) {
+  return text.replace(LATIN_LOOKALIKE_RE, (ch) => LATIN_LOOKALIKES[ch]);
+}
+
 /** Normalise une chaîne pour la comparaison : accent, ё/е, casse, espaces superflus. */
 export function normalize(text) {
   return stripStress(text)
@@ -73,11 +90,38 @@ export function levenshtein(a, b) {
  *   `close` signale une faute d'une seule lettre (« presque »), à afficher avec la différence.
  */
 export function compareAnswer(input, expected) {
-  const a = normalize(input);
+  const fixed = fixLatinLookalikes(input);
+  const latin = fixed !== input;
+  const a = normalize(fixed);
   const b = normalize(expected);
-  if (a === b) return { correct: true, close: false, distance: 0 };
+  if (a === b) return { correct: true, close: false, distance: 0, latin };
   const distance = levenshtein(a, b);
-  return { correct: false, close: distance === 1, distance };
+  return { correct: false, close: distance === 1, distance, latin, diff: diffParts(a, b) };
+}
+
+/**
+ * Où deux chaînes diffèrent : le préfixe commun, la partie différente de chaque côté, le
+ * suffixe commun. Sert au « presque » du §4.2, qui doit montrer la différence et pas
+ * seulement la bonne réponse.
+ * @returns {{before: string, typed: string, expected: string, after: string}}
+ */
+export function diffParts(typed, expected) {
+  let start = 0;
+  while (start < typed.length && start < expected.length && typed[start] === expected[start]) start++;
+  let end = 0;
+  while (
+    end < typed.length - start &&
+    end < expected.length - start &&
+    typed[typed.length - 1 - end] === expected[expected.length - 1 - end]
+  ) {
+    end++;
+  }
+  return {
+    before: expected.slice(0, start),
+    typed: typed.slice(start, typed.length - end),
+    expected: expected.slice(start, expected.length - end),
+    after: expected.slice(expected.length - end),
+  };
 }
 
 /**
@@ -102,4 +146,65 @@ export function splitSyllables(word) {
     starts.push(vowelIndices[i - 1] + 1);
   }
   return starts.map((start, i) => word.slice(start, i + 1 < starts.length ? starts[i + 1] : word.length));
+}
+
+// Ponctuation retirée pour découper ou comparer une phrase (§5.4) : elle ne fait pas partie
+// des mots, ni de ce qu'on demande de taper en dictée (exercice 12, §4.2).
+const PUNCTUATION = /[.,!?;:…«»"„“”()—–-]/g;
+
+/**
+ * Les mots d'une phrase russe, ponctuation retirée, dans l'ordre. C'est cette numérotation
+ * (à partir de 1) que suivent les champs "stress" et "words" d'une phrase (§5.4) : un tiret
+ * de dialogue isolé ("Спасибо! — Пожалуйста.") ne compte pas comme un mot.
+ * @param {string} sentence
+ * @returns {string[]}
+ */
+export function sentenceTokens(sentence) {
+  return sentence
+    .split(/\s+/)
+    .map((chunk) => chunk.replace(PUNCTUATION, ''))
+    .filter((token) => token.length > 0);
+}
+
+/**
+ * Remet les marques d'accent tonique dans une phrase en gardant sa ponctuation d'origine.
+ * @param {string} sentence
+ * @param {[number, number][]} stress - paires [n° du mot, n° de la syllabe], à partir de 1 (§5.4)
+ */
+export function sentenceWithStress(sentence, stress) {
+  const bySlot = new Map(stress.map(([position, syllable]) => [position, syllable]));
+  let position = 0;
+  return sentence
+    .split(/(\s+)/)
+    .map((chunk) => {
+      if (/^\s*$/.test(chunk) || chunk.replace(PUNCTUATION, '').length === 0) return chunk;
+      position++;
+      // Un monosyllabe n'est jamais marqué (convention russe : « как », pas « ка́к ») — il
+      // n'y a qu'une voyelle, aucune hésitation possible. La ponctuation ne contient aucune
+      // voyelle : withStressMark peut s'appliquer au morceau entier ("Привет!").
+      if (!bySlot.has(position) || splitSyllables(chunk).length < 2) return chunk;
+      return withStressMark(chunk, bySlot.get(position));
+    })
+    .join('');
+}
+
+/**
+ * Compare une phrase tapée (dictée, exercice 12) à la phrase attendue : même tolérance que
+ * compareAnswer, et la ponctuation est ignorée des deux côtés.
+ */
+export function compareSentence(input, expected) {
+  return compareAnswer(sentenceTokens(input).join(' '), sentenceTokens(expected).join(' '));
+}
+
+/**
+ * Exercice 11 (§4.2) : la réponse est-elle la phrase dans le bon ordre ? Compare les mots
+ * eux-mêmes et pas leurs positions, pour qu'un mot présent deux fois (« очень, очень »)
+ * soit accepté quelle que soit la tuile choisie en premier.
+ * @param {string[]} answerTokens - les tuiles dans l'ordre choisi
+ * @param {string} sentence - la phrase attendue
+ */
+export function isCorrectOrder(answerTokens, sentence) {
+  const expected = sentenceTokens(sentence).map(normalize);
+  const given = answerTokens.map(normalize);
+  return given.length === expected.length && given.every((token, i) => token === expected[i]);
 }
