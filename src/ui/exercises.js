@@ -5,6 +5,7 @@
 //   3 (lire à voix haute puis vérifier), pour un mot
 //   4 (où est l'accent ?), pour un mot
 //   7 (taper le mot entendu), pour un mot
+//   9 (écrire en russe à partir du français), pour un mot
 //   8 (paires minimales audio), pour une paire
 //   11 (remettre les mots dans l'ordre) et 12 (dictée), pour une phrase
 //
@@ -96,6 +97,22 @@ export function buildWordListening(word) {
     label: 'Écoute et tape le mot que tu entends',
     expected: word.ru,
     explanation: `${word.ru} — ${word.fr}`,
+  };
+}
+
+/**
+ * Exercice 9 (§4.2) : voir le mot en français et l'écrire en russe. Production pure, sans
+ * audio avant de répondre (il donnerait la réponse) : le mot est joué avec la correction.
+ * @param {object} word - une entrée de content/words/*.json (vocabulaire A1+, "fr" sans cyrillique)
+ */
+export function buildFrRuQuestion(word) {
+  return {
+    kind: 'fr-ru',
+    prompt: word.fr,
+    label: 'Écris ce mot en russe',
+    expected: word.ru,
+    audioText: word.ru,
+    explanation: word.note ? `${word.ru} — ${word.fr}. ${word.note}` : `${word.ru} — ${word.fr}`,
   };
 }
 
@@ -216,6 +233,7 @@ export function buildOrderQuestion(sentence) {
     fr: sentence.fr,
     tiles: shuffled,
     sentence: sentence.ru,
+    alternatives: sentence.orderAlternatives ?? [],
     audioText: sentence.ru,
     expected: sentence.ru,
     explanation: sentenceExplanation(sentence),

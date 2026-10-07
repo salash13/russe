@@ -57,6 +57,24 @@ export function seedPairCards(cardsState, pairs, wordsById, todayKey, units = []
 }
 
 /**
+ * Les facettes d'un mot, c'est-à-dire les exercices qui le travaillent (§4.2) :
+ *   - "ecoute" (7, taper le mot entendu) et "lecture" (3, lire à voix haute) : toujours ;
+ *   - "accent" (4, où est l'accent ?) : à partir de 2 syllabes, sinon la question n'en est pas une ;
+ *   - "fr-ru" (9, écrire en russe à partir du français) : seulement pour le vocabulaire du
+ *     programme (unité présente dans units.json, A1+). Les mots de lecture N0 sont des mots
+ *     transparents (такси = taxi) : la consigne française y donnerait déjà la réponse.
+ * Même fonction pour créer les cartes (ici) et décider si elles sont présentables
+ * (src/ui/content.js) : les deux ne peuvent pas diverger (§4.3).
+ */
+export function wordFacets(word, units = []) {
+  const facets = ['ecoute'];
+  if (splitSyllables(word.ru).length >= 2) facets.push('accent');
+  facets.push('lecture');
+  if (units.some((u) => u.id === word.unit)) facets.push('fr-ru');
+  return facets;
+}
+
+/**
  * Ajoute une carte neuve (due aujourd'hui) pour chaque mot relu dont l'unité est débloquée
  * et qui n'a pas encore de carte, afin qu'il entre dans le cycle normal de séance
  * (découverte puis révision espacée). Les mots non relus n'obtiennent jamais de carte : ils
@@ -69,8 +87,7 @@ export function seedWordCards(cardsState, words, todayKey, units = []) {
   for (const word of words) {
     if (word.reviewed?.ok !== true) continue;
     if (!isUnitUnlocked(word.unit, { units, words, cards: cardsState })) continue;
-    const facets = splitSyllables(word.ru).length >= 2 ? ['ecoute', 'accent', 'lecture'] : ['ecoute', 'lecture'];
-    for (const facet of facets) {
+    for (const facet of wordFacets(word, units)) {
       const id = makeCardId('word', word.id, facet);
       if (cardsState[id]) continue;
       cardsState[id] = { difficulty: 5, stability: 0.5, reps: 0, lapses: 0, due: todayKey };

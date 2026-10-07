@@ -969,3 +969,12 @@ h1 {
   color: #1a1a2e;
   text-decoration: underline;
 }
+
+/* Exercice 9 (§4.2) : la consigne en français */
+
+.prompt-fr {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 600;
+  text-align: center;
+}

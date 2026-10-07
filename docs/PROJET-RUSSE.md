@@ -437,3 +437,11 @@ le gestionnaire unique `data-act` ; zéro dépendance ; l'export JSON ; la gamif
   jamais marqués à l'affichage. Champ `note` facultatif, montré à la découverte et à la
   correction. Unité 1 : 12 phrases au tutoiement + 4 mots ajoutés (меня, тебя, хорошо, а),
   relus par Claude comme le reste (pas un natif).
+- **07/10/2026** — Exercice 9 (français → russe, à taper) : facette `fr-ru`, réservée au
+  vocabulaire du programme (A1+) — sur les mots transparents N0, la consigne donnerait la
+  réponse. Conséquence : le champ `fr` d'un mot ne contient jamais de cyrillique (vérifié par
+  le validateur) ; les exemples russes vont dans un nouveau champ `note`, affiché à la
+  découverte. L'ordre des mots étant libre en russe, une phrase peut déclarer d'autres ordres
+  justes (`orderAlternatives`, mêmes mots exactement, vérifié). Trait d'union = espace à la
+  saisie. ё jamais marqué d'un accent (toujours accentué). Unité 2 « La famille » : 30 mots
+  (dont 5 verbes au présent avec leurs formes) et 18 phrases, relus par Claude.

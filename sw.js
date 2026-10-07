@@ -4,7 +4,7 @@
 // contient la version : il change à chaque publication pour ne jamais mélanger ancien
 // code et nouveau contenu (les anciens caches sont supprimés à l'activation).
 
-const CACHE_NAME = 'russe-v9';
+const CACHE_NAME = 'russe-v11';
 
 const PRECACHE_URLS = [
   './',

@@ -6,8 +6,7 @@
 // ce fichier-ci ne fait que charger les données via fetch().
 
 import { registerCardType } from '../core/cards.js';
-import { splitSyllables } from '../core/text.js';
-import { sentenceFacets } from '../core/seeding.js';
+import { sentenceFacets, wordFacets } from '../core/seeding.js';
 
 let cache = null;
 
@@ -61,19 +60,17 @@ export async function loadContent() {
     },
   });
 
-  // Une carte "word:<id>:ecoute" (exercice 7, taper le mot entendu), "word:<id>:accent"
-  // (exercice 4, où est l'accent ?) ou "word:<id>:lecture" (exercice 3, lire à voix haute
-  // puis vérifier) ne peut être présentée que si le mot existe ET a été relu par un natif
-  // (§2.9, §5.5 : rien n'est publié sans relecture — appliqué ici au niveau du SRS, pas
-  // seulement à l'affichage). La facette "accent" n'a de sens que pour un mot d'au moins
-  // deux syllabes : sur une seule syllabe, la question n'en est pas une.
+  // Une carte "word:<id>:<facette>" ne peut être présentée que si le mot existe ET a été
+  // relu (§2.9, §5.5 : rien n'est publié sans relecture — appliqué ici au niveau du SRS, pas
+  // seulement à l'affichage), et que la facette fait partie de celles que
+  // core/seeding.js#wordFacets lui donne (accent : 2 syllabes ou plus ; fr-ru : vocabulaire
+  // du programme A1+ seulement).
   registerCardType('word', {
-    facets: ['ecoute', 'accent', 'lecture'],
+    facets: ['ecoute', 'accent', 'lecture', 'fr-ru'],
     canPresent: (parsed) => {
       const word = wordsById.get(parsed.elementId);
       if (!word || word.reviewed?.ok !== true) return false;
-      if (parsed.facet === 'accent' && splitSyllables(word.ru).length < 2) return false;
-      return true;
+      return wordFacets(word, units).includes(parsed.facet);
     },
   });
 

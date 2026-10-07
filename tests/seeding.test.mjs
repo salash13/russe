@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isUnitUnlocked, seedWordCards, seedPairCards } from '../src/core/seeding.js';
+import { isUnitUnlocked, seedWordCards, seedPairCards, wordFacets } from '../src/core/seeding.js';
 
 function word(overrides = {}) {
   return { id: 'ya', ru: 'я', fr: 'je', unit: 'a1-01', reviewed: { ok: true }, ...overrides };
@@ -105,4 +105,23 @@ test('seedPairCards : crée la carte une fois les deux unités débloquées', ()
 
   assert.equal(added, 1);
   assert.ok(cards['pair:brat-brat']);
+});
+
+test('wordFacets : fr-ru seulement pour le vocabulaire du programme (A1+), accent dès 2 syllabes', () => {
+  const units = [unit()];
+  assert.deepEqual(wordFacets(word({ ru: 'привет', unit: 'a1-01' }), units), ['ecoute', 'accent', 'lecture', 'fr-ru']);
+  assert.deepEqual(wordFacets(word({ ru: 'я', unit: 'a1-01' }), units), ['ecoute', 'lecture', 'fr-ru']);
+  // Mot de lecture N0 (такси = taxi) : la consigne française donnerait la réponse.
+  assert.deepEqual(wordFacets(word({ ru: 'такси', unit: 'n0-lecture' }), units), ['ecoute', 'accent', 'lecture']);
+});
+
+test("seedWordCards : ajoute la facette fr-ru à un mot déjà appris, sans toucher aux autres", () => {
+  const units = [unit()];
+  const cards = {
+    'word:ya:ecoute': { reps: 3, due: '2026-10-10' },
+    'word:ya:lecture': { reps: 2, due: '2026-10-12' },
+  };
+  assert.equal(seedWordCards(cards, [word()], '2026-10-07', units), 1);
+  assert.equal(cards['word:ya:fr-ru'].reps, 0);
+  assert.equal(cards['word:ya:ecoute'].reps, 3);
 });

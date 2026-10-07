@@ -388,3 +388,14 @@ test('les vraies phrases de content/sentences/ sont valides', async () => {
     assert.deepEqual(checkSentences(data, name, { wordIds, unitIds: new Set(units.map((u) => u.id)) }), []);
   }
 });
+
+test('checkWords : refuse du cyrillique dans "fr" (consigne de l\'exercice 9)', () => {
+  const w = { id: 'x', ru: 'приятно', fr: 'agréable (« очень приятно »)', stress: 2, reviewed: { by: '', date: '', ok: false } };
+  assert.ok(checkWords([w]).some((e) => e.includes('cyrillique')));
+  assert.deepEqual(checkWords([{ ...w, fr: 'agréable', note: '« очень приятно » = enchanté' }]), []);
+});
+
+test('checkSentences : un autre ordre accepté doit utiliser exactement les mêmes mots', () => {
+  assert.deepEqual(checkSentences([sentence({ orderAlternatives: ['Бен меня зовут.'] })]), []);
+  assert.ok(checkSentences([sentence({ orderAlternatives: ['Меня зовут Анна.'] })]).some((e) => e.includes('orderAlternatives')));
+});

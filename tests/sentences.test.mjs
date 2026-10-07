@@ -100,3 +100,19 @@ test('seedSentenceCards : ne crée que des facettes déclarées par sentenceFace
   }
   assert.equal(Object.keys(cards).length, 3);
 });
+
+test("sentenceTokens : garde le trait d'union à l'intérieur d'un mot", () => {
+  assert.deepEqual(sentenceTokens('Ты говоришь по-русски?'), ['Ты', 'говоришь', 'по-русски']);
+});
+
+test("compareSentence : « по русски » (sans trait d'union) est accepté", () => {
+  assert.equal(compareSentence('ты говоришь по русски', 'Ты говоришь по-русски?').correct, true);
+  assert.equal(compareSentence('ты говоришь по-русски', 'Ты говоришь по-русски?').correct, true);
+});
+
+test('isCorrectOrder : accepte un autre ordre déclaré juste', () => {
+  const alt = ['Спасибо, хорошо. А ты?'];
+  assert.equal(isCorrectOrder(['спасибо', 'хорошо', 'а', 'ты'], 'Хорошо, спасибо. А ты?', alt), true);
+  assert.equal(isCorrectOrder(['спасибо', 'хорошо', 'а', 'ты'], 'Хорошо, спасибо. А ты?'), false);
+  assert.equal(isCorrectOrder(['ты', 'а', 'хорошо', 'спасибо'], 'Хорошо, спасибо. А ты?', alt), false);
+});

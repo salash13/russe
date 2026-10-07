@@ -24,6 +24,8 @@ export function withStressMark(word, stress) {
     if (RUSSIAN_VOWELS.has(lower[i])) {
       vowelCount++;
       if (vowelCount === stress) {
+        // ё est toujours accentué : on ne le marque jamais (« живёшь », pas « живё́шь »).
+        if (lower[i] === 'ё') return word;
         return word.slice(0, i + 1) + STRESS_MARK + word.slice(i + 1);
       }
     }
@@ -48,11 +50,16 @@ export function fixLatinLookalikes(text) {
   return text.replace(LATIN_LOOKALIKE_RE, (ch) => LATIN_LOOKALIKES[ch]);
 }
 
-/** Normalise une chaîne pour la comparaison : accent, ё/е, casse, espaces superflus. */
+/**
+ * Normalise une chaîne pour la comparaison : accent, ё/е, casse, espaces superflus. Le trait
+ * d'union compte comme une espace (« по-русски » = « по русски ») : le clavier russe à
+ * l'écran n'en a pas, et ce n'est pas ce qu'on cherche à tester.
+ */
 export function normalize(text) {
   return stripStress(text)
     .toLowerCase()
     .replace(/ё/g, 'е')
+    .replace(/-/g, ' ')
     .trim()
     .replace(/\s+/g, ' ');
 }
@@ -149,8 +156,11 @@ export function splitSyllables(word) {
 }
 
 // Ponctuation retirée pour découper ou comparer une phrase (§5.4) : elle ne fait pas partie
-// des mots, ni de ce qu'on demande de taper en dictée (exercice 12, §4.2).
-const PUNCTUATION = /[.,!?;:…«»"„“”()—–-]/g;
+// des mots, ni de ce qu'on demande de taper en dictée (exercice 12, §4.2). Retirée seulement
+// en bordure de mot : le trait d'union de « по-русски » fait partie du mot.
+const PUNCT = '.,!?;:…«»"„“”()—–-';
+const PUNCTUATION = new RegExp(`[${PUNCT}]`, 'g');
+const EDGE_PUNCTUATION = new RegExp(`^[${PUNCT}]+|[${PUNCT}]+$`, 'g');
 
 /**
  * Les mots d'une phrase russe, ponctuation retirée, dans l'ordre. C'est cette numérotation
@@ -162,7 +172,7 @@ const PUNCTUATION = /[.,!?;:…«»"„“”()—–-]/g;
 export function sentenceTokens(sentence) {
   return sentence
     .split(/\s+/)
-    .map((chunk) => chunk.replace(PUNCTUATION, ''))
+    .map((chunk) => chunk.replace(EDGE_PUNCTUATION, ''))
     .filter((token) => token.length > 0);
 }
 
@@ -197,14 +207,24 @@ export function compareSentence(input, expected) {
 }
 
 /**
- * Exercice 11 (§4.2) : la réponse est-elle la phrase dans le bon ordre ? Compare les mots
+ * Exercice 11 (§4.2) : la réponse est-elle la phrase dans un ordre accepté ? L'ordre des mots
+ * est assez libre en russe (« Хорошо, спасибо » = « Спасибо, хорошо ») : la phrase peut
+ * déclarer d'autres ordres justes (champ "orderAlternatives", §5.4). Compare les mots
  * eux-mêmes et pas leurs positions, pour qu'un mot présent deux fois (« очень, очень »)
  * soit accepté quelle que soit la tuile choisie en premier.
  * @param {string[]} answerTokens - les tuiles dans l'ordre choisi
  * @param {string} sentence - la phrase attendue
+ * @param {string[]} [alternatives] - d'autres ordres acceptés de la même phrase
  */
-export function isCorrectOrder(answerTokens, sentence) {
-  const expected = sentenceTokens(sentence).map(normalize);
+export function isCorrectOrder(answerTokens, sentence, alternatives = []) {
   const given = answerTokens.map(normalize);
-  return given.length === expected.length && given.every((token, i) => token === expected[i]);
+  return [sentence, ...alternatives].some((candidate) => {
+    const expected = sentenceTokens(candidate).map(normalize);
+    return given.length === expected.length && given.every((token, i) => token === expected[i]);
+  });
+}
+
+/** Les mots d'une phrase, normalisés et triés : deux ordres de la même phrase ont la même clé. */
+export function tokenMultiset(sentence) {
+  return sentenceTokens(sentence).map(normalize).sort().join(' ');
 }

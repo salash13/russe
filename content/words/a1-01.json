@@ -1,7 +1,7 @@
 [
   {
     "id": "privet", "ru": "привет", "stress": 2,
-    "fr": "salut", "pos": "interjection",
+    "fr": "salut (en arrivant)", "pos": "interjection",
     "pron": "pri-VET",
     "forms": {},
     "unit": "a1-01", "freq": null,
@@ -46,7 +46,7 @@
   },
   {
     "id": "priyatno", "ru": "приятно", "stress": 2,
-    "fr": "agréable (« очень приятно » = enchanté)", "pos": "adverbe",
+    "fr": "agréable", "note": "« очень приятно » = enchanté (mot à mot « très agréable »)", "pos": "adverbe",
     "pron": "pri-YAT-na",
     "forms": {},
     "unit": "a1-01", "freq": null,
@@ -100,7 +100,7 @@
   },
   {
     "id": "menya", "ru": "меня", "stress": 2,
-    "fr": "me / moi (« меня зовут » = je m'appelle)", "pos": "pronom",
+    "fr": "me / moi (complément)", "note": "La forme de я quand on « subit » l'action : « меня зовут » = on m'appelle", "pos": "pronom",
     "pron": "mi-NYA",
     "forms": {},
     "unit": "a1-01", "freq": null,
@@ -109,7 +109,7 @@
   },
   {
     "id": "tebya", "ru": "тебя", "stress": 2,
-    "fr": "te / toi (« как тебя зовут ? » = comment tu t'appelles ?)", "pos": "pronom",
+    "fr": "te / toi (complément)", "note": "La forme de ты quand on « subit » l'action : « как тебя зовут ? » = comment tu t'appelles ?", "pos": "pronom",
     "pron": "ti-BYA",
     "forms": {},
     "unit": "a1-01", "freq": null,
@@ -127,7 +127,7 @@
   },
   {
     "id": "a", "ru": "а", "stress": 1,
-    "fr": "et / mais (contraste, « а ты ? » = et toi ?)", "pos": "conjonction",
+    "fr": "et / mais (pour opposer ou relancer)", "note": "« а ты? » = et toi ? — а oppose ou relance, и ajoute simplement", "pos": "conjonction",
     "pron": "A",
     "forms": {},
     "unit": "a1-01", "freq": null,

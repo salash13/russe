@@ -104,3 +104,8 @@ test('diffParts : lettre oubliée ou en trop', () => {
   assert.deepEqual(diffParts('таки', 'такси'), { before: 'так', typed: '', expected: 'с', after: 'и' });
   assert.deepEqual(diffParts('таксси', 'такси'), { before: 'такс', typed: 'с', expected: '', after: 'и' });
 });
+
+test("withStressMark : ё n'est jamais marqué, il est toujours accentué", () => {
+  assert.equal(withStressMark('ребёнок', 2), 'ребёнок');
+  assert.equal(withStressMark('молоко', 3), 'молоко́');
+});

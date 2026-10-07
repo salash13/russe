@@ -16,6 +16,7 @@ import {
   buildTraceQuestion,
   buildOrderQuestion,
   buildDictationQuestion,
+  buildFrRuQuestion,
 } from '../exercises.js';
 import { questionScreenHtml } from '../questionView.js';
 import { keyboardHtml } from '../keyboard.js';
@@ -109,6 +110,7 @@ function renderWordDiscovery(app, elementId) {
     <section class="screen screen-discovery" aria-live="polite">
       <p class="prompt-letter" lang="ru">${h(word.ru)}</p>
       <p class="letter-sound">« ${h(word.pron ?? word.ru)} » — ${h(word.fr)}</p>
+      ${word.note ? `<p class="sentence-note">💡 ${h(word.note)}</p>` : ''}
       <button type="button" class="btn-audio" data-act="play-audio" aria-label="Écouter">🔊</button>
       ${audioWarningHtml()}
       <button type="button" class="btn-primary" data-act="reveal">Je suis prêt</button>
@@ -218,6 +220,15 @@ function renderQuestion(app, id) {
     return;
   }
 
+  if (type === 'word' && facet === 'fr-ru') {
+    const word = app.content.wordsById.get(elementId);
+    const question = buildFrRuQuestion(word);
+    app.runtime.currentQuestion = question;
+    app.runtime.audioText = null; // pas d'audio avant de répondre : il donnerait la réponse
+    renderTypingScreen(question, progressLabel);
+    return;
+  }
+
   if (type === 'word' && facet === 'accent') {
     const word = app.content.wordsById.get(elementId);
     const question = buildAccentQuestion(word);
@@ -312,7 +323,7 @@ export function onSessionSubmitOrder(app) {
   const question = app.runtime.currentQuestion;
   const answer = app.runtime.orderPicked.map((i) => question.tiles[i]);
   if (answer.length !== question.tiles.length) return;
-  app.runtime.pendingCorrect = isCorrectOrder(answer, question.sentence);
+  app.runtime.pendingCorrect = isCorrectOrder(answer, question.sentence, question.alternatives);
   renderFeedback(app, app.runtime.pendingCorrect, question);
   playAudio(app.progress.state.settings, question.audioText);
 }
@@ -380,13 +391,17 @@ export function onTraceReveal(app) {
   renderFeedback(app, null, app.runtime.currentQuestion);
 }
 
-/** Exercice 7 (§4.2) : écouter, taper au clavier cyrillique à l'écran, valider. */
+/** Exercices 7, 9 et 12 (§4.2) : écouter (ou lire la consigne en français), taper au clavier cyrillique à l'écran, valider. */
 function renderTypingScreen(question, progressLabel) {
   appRoot().innerHTML = `
     <section class="screen screen-question" aria-live="polite">
       <p class="session-progress">${h(progressLabel)}</p>
-      <button type="button" class="btn-audio" data-act="play-audio" aria-label="Écouter">🔊</button>
-      ${audioWarningHtml()}
+      ${
+        question.prompt
+          ? `<p class="prompt-fr">${h(question.prompt)}</p>`
+          : `<button type="button" class="btn-audio" data-act="play-audio" aria-label="Écouter">🔊</button>
+      ${audioWarningHtml()}`
+      }
       <h2 class="question-text">${h(question.label)}</h2>
       <input id="word-input" class="word-input" type="text" lang="ru" autocomplete="off"
         autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Ta réponse en russe" />
@@ -421,6 +436,8 @@ export function onSessionSubmitTyped(app) {
   const result = compare(input?.value ?? '', question.expected);
   app.runtime.pendingCorrect = result.correct;
   renderFeedback(app, result.correct, question, result);
+  // Exercice 9 : le mot n'a pas été entendu avant de répondre, on le fait entendre maintenant.
+  if (question.kind === 'fr-ru') playAudio(app.progress.state.settings, question.audioText);
 }
 
 const RATING_LABELS = [

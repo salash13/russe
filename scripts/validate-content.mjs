@@ -11,7 +11,7 @@
 import { readFile, readdir } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
-import { sentenceTokens } from '../src/core/text.js';
+import { sentenceTokens, tokenMultiset } from '../src/core/text.js';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const CONTENT_DIR = path.join(ROOT, 'content');
@@ -236,6 +236,12 @@ export function checkWords(words, fileLabel = 'words.json') {
 
     if (!word?.ru) errors.push(`${label} : champ "ru" manquant.`);
     if (!word?.fr) errors.push(`${label} : champ "fr" manquant.`);
+    else if (/[\u0400-\u04FF]/.test(word.fr)) {
+      // "fr" sert de consigne à l'exercice 9 (français → russe) : du russe dedans donnerait
+      // la réponse. Les exemples en russe vont dans "note".
+      errors.push(`${label} : "fr" contient du cyrillique — mettre l'exemple russe dans "note".`);
+    }
+    if (word?.note !== undefined && typeof word.note !== 'string') errors.push(`${label} : "note" doit être une chaîne.`);
 
     const syllables = countSyllables(word?.ru ?? '');
     if (!Number.isInteger(word?.stress) || word.stress < 1) {
@@ -468,6 +474,18 @@ export function checkSentences(sentences, fileLabel = 'sentences.json', { wordId
       });
     }
 
+    if (sentence?.orderAlternatives !== undefined) {
+      if (!Array.isArray(sentence.orderAlternatives)) {
+        errors.push(`${label} : "orderAlternatives" doit être un tableau de phrases.`);
+      } else {
+        // Un autre ordre accepté doit être fait exactement des mêmes mots (même tuiles).
+        for (const alt of sentence.orderAlternatives) {
+          if (typeof alt !== 'string' || tokenMultiset(alt) !== tokenMultiset(sentence.ru)) {
+            errors.push(`${label} : "orderAlternatives" contient ${JSON.stringify(alt)}, qui n'utilise pas exactement les mêmes mots.`);
+          }
+        }
+      }
+    }
     if (sentence?.note !== undefined && typeof sentence.note !== 'string') {
       errors.push(`${label} : "note" doit être une chaîne.`);
     }
