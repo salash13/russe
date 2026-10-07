@@ -1,0 +1,19 @@
+# Tests du cœur + validation du contenu à chaque push et pull request (§6.8).
+name: Tests et contenu
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verifier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Tests (node --test)
+        run: npm test
+      - name: Validation du contenu
+        run: npm run validate
