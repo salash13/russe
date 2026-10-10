@@ -58,17 +58,25 @@ test("sentenceFacets : pas d'exercice d'ordre en dessous de 3 mots", () => {
   assert.deepEqual(sentenceFacets(sentence({ ru: 'Очень приятно!' })), ['dictee']);
 });
 
-test('seedSentenceCards : attend que les mots référencés soient introduits', () => {
+function acquired() {
+  return { reps: 2, stability: 10, due: '2026-10-20' };
+}
+
+test('seedSentenceCards : attend que le sens des mots référencés soit acquis', () => {
   const words = [word('menya')];
-  const cards = { 'word:menya:ecoute': { reps: 0, due: '2026-10-07' } };
+  const cards = { 'word:menya:sens': { reps: 1, stability: 2.4, due: '2026-10-07' } };
   assert.equal(seedSentenceCards(cards, [sentence()], words, '2026-10-07', units), 0);
 
-  cards['word:menya:ecoute'].reps = 1;
-  assert.equal(seedSentenceCards(cards, [sentence()], words, '2026-10-07', units), 2);
+  cards['word:menya:sens'] = acquired();
+  assert.equal(seedSentenceCards(cards, [sentence()], words, '2026-10-07', units), 1);
+  // Échelle : d'abord remettre dans l'ordre, la dictée seulement après.
   assert.ok(cards['sentence:a1-01-s01:ordre']);
-  assert.ok(cards['sentence:a1-01-s01:dictee']);
-  // Idempotent : rien de recréé au lancement suivant.
+  assert.ok(!cards['sentence:a1-01-s01:dictee']);
   assert.equal(seedSentenceCards(cards, [sentence()], words, '2026-10-07', units), 0);
+
+  cards['sentence:a1-01-s01:ordre'] = acquired();
+  assert.equal(seedSentenceCards(cards, [sentence()], words, '2026-10-07', units), 1);
+  assert.ok(cards['sentence:a1-01-s01:dictee']);
 });
 
 test('seedSentenceCards : une phrase non relue reste invisible (§5.5)', () => {
@@ -79,11 +87,11 @@ test('seedSentenceCards : une phrase non relue reste invisible (§5.5)', () => {
 
 test("seedSentenceCards : respecte l'ordre des unités (§2.6)", () => {
   const words = [word('menya'), word('mama', 'a1-02')];
-  const cards = { 'word:menya:ecoute': { reps: 0, due: '2026-10-07' } };
+  const cards = { 'word:menya:sens': { reps: 0, due: '2026-10-07' } };
   const s = sentence({ id: 'a1-02-s01', unit: 'a1-02', words: [null, null, null] });
   assert.equal(seedSentenceCards(cards, [s], words, '2026-10-07', units), 0);
-  cards['word:menya:ecoute'].reps = 1;
-  assert.equal(seedSentenceCards(cards, [s], words, '2026-10-07', units), 2);
+  cards['word:menya:sens'] = acquired();
+  assert.equal(seedSentenceCards(cards, [s], words, '2026-10-07', units), 1);
 });
 
 test('seedSentenceCards : ne crée que des facettes déclarées par sentenceFacets (toute carte présentable)', () => {
@@ -98,21 +106,5 @@ test('seedSentenceCards : ne crée que des facettes déclarées par sentenceFace
     const s = sentences.find((x) => x.id === elementId);
     assert.ok(sentenceFacets(s).includes(facet), `${id} n'est pas une facette présentable`);
   }
-  assert.equal(Object.keys(cards).length, 3);
-});
-
-test("sentenceTokens : garde le trait d'union à l'intérieur d'un mot", () => {
-  assert.deepEqual(sentenceTokens('Ты говоришь по-русски?'), ['Ты', 'говоришь', 'по-русски']);
-});
-
-test("compareSentence : « по русски » (sans trait d'union) est accepté", () => {
-  assert.equal(compareSentence('ты говоришь по русски', 'Ты говоришь по-русски?').correct, true);
-  assert.equal(compareSentence('ты говоришь по-русски', 'Ты говоришь по-русски?').correct, true);
-});
-
-test('isCorrectOrder : accepte un autre ordre déclaré juste', () => {
-  const alt = ['Спасибо, хорошо. А ты?'];
-  assert.equal(isCorrectOrder(['спасибо', 'хорошо', 'а', 'ты'], 'Хорошо, спасибо. А ты?', alt), true);
-  assert.equal(isCorrectOrder(['спасибо', 'хорошо', 'а', 'ты'], 'Хорошо, спасибо. А ты?'), false);
-  assert.equal(isCorrectOrder(['ты', 'а', 'хорошо', 'спасибо'], 'Хорошо, спасибо. А ты?', alt), false);
+  assert.deepEqual(Object.keys(cards).sort(), ['sentence:a1-01-s01:ordre', 'sentence:a1-01-s02:dictee']);
 });

@@ -445,3 +445,15 @@ le gestionnaire unique `data-act` ; zéro dépendance ; l'export JSON ; la gamif
   justes (`orderAlternatives`, mêmes mots exactement, vérifié). Trait d'union = espace à la
   saisie. ё jamais marqué d'un accent (toujours accentué). Unité 2 « La famille » : 30 mots
   (dont 5 verbes au présent avec leurs formes) et 18 phrases, relus par Claude.
+- **10/10/2026** — Retour de Ben : la difficulté sautait d'un coup (кино lu « kimo » : le н,
+  faux-ami du H, pas encore solide ; et un mot nouveau passait de la découverte directement
+  à « écoute et tape »). Deux réponses, dans `src/core/seeding.js` :
+  1. **Un mot attend que toutes ses lettres soient acquises** (carte `letter:<id>:son`), §3.2.
+  2. **Échelle par mot** : sens (QCM ru → fr) → reconnaître à l'oreille (QCM) → lire/accent →
+     produire (taper l'entendu, fr → ru). Une marche s'ouvre quand la précédente est
+     **acquise** = stabilité FSRS ≥ 3 jours (réussie, puis réussie à nouveau après un
+     intervalle). Phrases : ordre puis dictée, et seulement quand le sens de leurs mots est
+     acquis. Paires : quand le sens des deux mots est acquis.
+  Une carte jamais présentée (reps = 0) d'une marche pas encore ouverte est retirée (aucun
+  historique perdu, recréée le moment venu) ; une carte travaillée n'est jamais retirée.
+  Fiche de découverte : une seule fois par élément, et les lettres faux-amis du mot signalées.

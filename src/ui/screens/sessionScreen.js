@@ -17,6 +17,8 @@ import {
   buildOrderQuestion,
   buildDictationQuestion,
   buildFrRuQuestion,
+  buildMeaningQuestion,
+  buildRecognizeQuestion,
 } from '../exercises.js';
 import { questionScreenHtml } from '../questionView.js';
 import { keyboardHtml } from '../keyboard.js';
@@ -49,9 +51,19 @@ export function startSession(app) {
   renderSessionStep(app);
 }
 
-function isNewCard(app, id) {
-  const card = app.progress.state.cards[id];
-  return !card || card.reps === 0;
+/**
+ * La fiche de découverte (§2.2) se montre une seule fois par élément, pas par carte : quand
+ * un mot déjà travaillé monte d'une marche (une nouvelle facette, encore jamais vue), on ne
+ * le « redécouvre » pas.
+ */
+function needsDiscovery(app, id) {
+  const { type, elementId } = parseCardId(id);
+  const key = `${type}:${elementId}`;
+  if (app.runtime.discovered.has(key)) return false;
+  return !Object.entries(app.progress.state.cards).some(([cardId, card]) => {
+    const parsed = parseCardId(cardId);
+    return parsed.type === type && parsed.elementId === elementId && card.reps > 0;
+  });
 }
 
 function renderSessionStep(app) {
@@ -59,9 +71,7 @@ function renderSessionStep(app) {
   if (id == null) return finishSession(app);
 
   app.runtime.currentCardId = id;
-  if (isNewCard(app, id) && !app.runtime.discovered.has(id)) {
-    return renderDiscovery(app, id);
-  }
+  if (needsDiscovery(app, id)) return renderDiscovery(app, id);
   renderQuestion(app, id);
 }
 
@@ -110,6 +120,7 @@ function renderWordDiscovery(app, elementId) {
     <section class="screen screen-discovery" aria-live="polite">
       <p class="prompt-letter" lang="ru">${h(word.ru)}</p>
       <p class="letter-sound">« ${h(word.pron ?? word.ru)} » — ${h(word.fr)}</p>
+      ${trickyLettersHtml(app, word)}
       ${word.note ? `<p class="sentence-note">💡 ${h(word.note)}</p>` : ''}
       <button type="button" class="btn-audio" data-act="play-audio" aria-label="Écouter">🔊</button>
       ${audioWarningHtml()}
@@ -117,6 +128,27 @@ function renderWordDiscovery(app, elementId) {
     </section>
   `;
   playAudio(app.progress.state.settings, word.ru);
+}
+
+/**
+ * Les lettres pièges d'un mot (§3.2 : les faux-amis du lot 2), signalées dès la découverte :
+ * dans кино, le н ressemble à un H latin mais se lit « n » (Ben l'avait lu « kimo »).
+ */
+function trickyLettersHtml(app, word) {
+  const seen = new Set();
+  const tricky = [];
+  for (const ch of word.ru.toLowerCase()) {
+    const letter = app.content.letters.find((l) => l.lower === ch);
+    if (letter?.falseFriend && !seen.has(letter.id)) {
+      seen.add(letter.id);
+      tricky.push(letter);
+    }
+  }
+  return tricky
+    .map(
+      (l) => `<p class="letter-warning">⚠️ <span lang="ru">${h(l.lower)}</span> ${h(l.falseFriend)}</p>`
+    )
+    .join('');
 }
 
 /** Fiche de découverte de l'exercice 8 (§4.2) : les deux mots de la paire, côte à côte. */
@@ -170,7 +202,8 @@ function renderSentenceDiscovery(app, elementId) {
 }
 
 export function onSessionReveal(app) {
-  app.runtime.discovered.add(app.runtime.currentCardId);
+  const { type, elementId } = parseCardId(app.runtime.currentCardId);
+  app.runtime.discovered.add(`${type}:${elementId}`);
   renderQuestion(app, app.runtime.currentCardId);
 }
 
@@ -217,6 +250,20 @@ function renderQuestion(app, id) {
     app.runtime.audioText = question.audioText;
     renderTypingScreen(question, progressLabel);
     playAudio(app.progress.state.settings, question.audioText);
+    return;
+  }
+
+  if (type === 'word' && (facet === 'sens' || facet === 'reconnaitre')) {
+    const word = app.content.wordsById.get(elementId);
+    const showStress = app.progress.state.settings.showStress !== 'never';
+    const question =
+      facet === 'sens'
+        ? buildMeaningQuestion(word, app.content.words, { showStress })
+        : buildRecognizeQuestion(word, app.content.words);
+    app.runtime.currentQuestion = question;
+    app.runtime.audioText = question.audioText ?? null;
+    appRoot().innerHTML = questionScreenHtml(question, { progressLabel, act: 'answer' });
+    if (question.audioText) playAudio(app.progress.state.settings, question.audioText);
     return;
   }
 

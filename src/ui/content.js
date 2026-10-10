@@ -63,10 +63,10 @@ export async function loadContent() {
   // Une carte "word:<id>:<facette>" ne peut être présentée que si le mot existe ET a été
   // relu (§2.9, §5.5 : rien n'est publié sans relecture — appliqué ici au niveau du SRS, pas
   // seulement à l'affichage), et que la facette fait partie de celles que
-  // core/seeding.js#wordFacets lui donne (accent : 2 syllabes ou plus ; fr-ru : vocabulaire
-  // du programme A1+ seulement).
+  // core/seeding.js#wordFacets lui donne, toutes marches de l'échelle confondues (accent :
+  // 2 syllabes ou plus ; fr-ru : vocabulaire du programme A1+ seulement).
   registerCardType('word', {
-    facets: ['ecoute', 'accent', 'lecture', 'fr-ru'],
+    facets: ['sens', 'reconnaitre', 'lecture', 'accent', 'ecoute', 'fr-ru'],
     canPresent: (parsed) => {
       const word = wordsById.get(parsed.elementId);
       if (!word || word.reviewed?.ok !== true) return false;

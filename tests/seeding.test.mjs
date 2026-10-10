@@ -1,6 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { isUnitUnlocked, seedWordCards, seedPairCards, wordFacets } from '../src/core/seeding.js';
+import {
+  isUnitUnlocked,
+  seedWordCards,
+  seedPairCards,
+  wordFacets,
+  wordLevels,
+  unlockedWordFacets,
+  isAcquired,
+} from '../src/core/seeding.js';
 
 function word(overrides = {}) {
   return { id: 'ya', ru: 'я', fr: 'je', unit: 'a1-01', reviewed: { ok: true }, ...overrides };
@@ -92,36 +100,87 @@ test("seedPairCards : ne crée aucune carte si l'un des deux mots est d'une unit
   assert.deepEqual(cards, {});
 });
 
-test('seedPairCards : crée la carte une fois les deux unités débloquées', () => {
+test('seedPairCards : crée la carte une fois le sens des deux mots acquis', () => {
   const units = [unit({ id: 'a1-01', order: 1 })];
   const wordA = word({ id: 'brat', unit: 'a1-01' });
   const wordB = word({ id: 'brat-verbe', unit: 'a1-01' });
   const words = [wordA, wordB];
   const wordsById = new Map(words.map((w) => [w.id, w]));
   const pairs = [{ id: 'brat-brat', wordA: 'brat', wordB: 'brat-verbe', reviewed: { ok: true } }];
-  const cards = {};
+  const cards = { 'word:brat:sens': acquired() };
 
-  const added = seedPairCards(cards, pairs, wordsById, '2026-10-04', units, words);
-
-  assert.equal(added, 1);
+  assert.equal(seedPairCards(cards, pairs, wordsById, '2026-10-04', units, words), 0);
+  cards['word:brat-verbe:sens'] = acquired();
+  assert.equal(seedPairCards(cards, pairs, wordsById, '2026-10-04', units, words), 1);
   assert.ok(cards['pair:brat-brat']);
 });
 
-test('wordFacets : fr-ru seulement pour le vocabulaire du programme (A1+), accent dès 2 syllabes', () => {
-  const units = [unit()];
-  assert.deepEqual(wordFacets(word({ ru: 'привет', unit: 'a1-01' }), units), ['ecoute', 'accent', 'lecture', 'fr-ru']);
-  assert.deepEqual(wordFacets(word({ ru: 'я', unit: 'a1-01' }), units), ['ecoute', 'lecture', 'fr-ru']);
-  // Mot de lecture N0 (такси = taxi) : la consigne française donnerait la réponse.
-  assert.deepEqual(wordFacets(word({ ru: 'такси', unit: 'n0-lecture' }), units), ['ecoute', 'accent', 'lecture']);
+function acquired() {
+  return { reps: 2, stability: 10, due: '2026-10-20' };
+}
+
+const letters = [
+  { id: 'k', lower: 'к' }, { id: 'i', lower: 'и' }, { id: 'n', lower: 'н' }, { id: 'o', lower: 'о' },
+];
+
+test("isAcquired : une seule bonne réponse ne suffit pas, une révision espacée réussie oui", () => {
+  assert.equal(isAcquired({ reps: 1, stability: 2.4 }), false);
+  assert.equal(isAcquired({ reps: 2, stability: 8 }), true);
+  assert.equal(isAcquired({ reps: 0, stability: 5 }), false);
+  assert.equal(isAcquired(undefined), false);
 });
 
-test("seedWordCards : ajoute la facette fr-ru à un mot déjà appris, sans toucher aux autres", () => {
+test("wordLevels : du QCM vers la production ; fr-ru seulement pour l'A1+, accent dès 2 syllabes", () => {
+  const units = [unit()];
+  assert.deepEqual(wordLevels(word({ ru: 'привет', unit: 'a1-01' }), units), [
+    ['sens'], ['reconnaitre'], ['lecture', 'accent'], ['ecoute', 'fr-ru'],
+  ]);
+  assert.deepEqual(wordLevels(word({ ru: 'я', unit: 'a1-01' }), units), [['sens'], ['reconnaitre'], ['lecture'], ['ecoute', 'fr-ru']]);
+  // Mot de lecture N0 (такси = taxi) : la consigne française donnerait la réponse.
+  assert.deepEqual(wordFacets(word({ ru: 'такси', unit: 'n0-lecture' }), units), ['sens', 'reconnaitre', 'lecture', 'accent', 'ecoute']);
+});
+
+test('unlockedWordFacets : une marche ne se débloque que quand la précédente est acquise', () => {
+  const w = word({ ru: 'кино', unit: 'n0-lecture', id: 'kino' });
+  assert.deepEqual(unlockedWordFacets(w, {}), ['sens']);
+  // Réussi une fois seulement : pas encore acquis.
+  assert.deepEqual(unlockedWordFacets(w, { 'word:kino:sens': { reps: 1, stability: 2.4 } }), ['sens']);
+  const cards = { 'word:kino:sens': acquired(), 'word:kino:reconnaitre': acquired(), 'word:kino:lecture': acquired() };
+  // accent pas encore acquis : la production reste fermée.
+  assert.deepEqual(unlockedWordFacets(w, cards), ['sens', 'reconnaitre', 'lecture', 'accent']);
+  cards['word:kino:accent'] = acquired();
+  assert.deepEqual(unlockedWordFacets(w, cards), ['sens', 'reconnaitre', 'lecture', 'accent', 'ecoute']);
+});
+
+test("seedWordCards : un mot attend que toutes ses lettres soient acquises (кино sans н)", () => {
+  const kino = word({ id: 'kino', ru: 'кино', unit: 'n0-lecture' });
+  const cards = {
+    'letter:k:son': acquired(),
+    'letter:i:son': acquired(),
+    'letter:o:son': acquired(),
+    'letter:n:son': { reps: 1, stability: 0.4 }, // н raté : pas acquis
+  };
+  assert.equal(seedWordCards(cards, [kino], '2026-10-10', [], letters), 0);
+  assert.ok(!cards['word:kino:sens']);
+  cards['letter:n:son'] = acquired();
+  assert.equal(seedWordCards(cards, [kino], '2026-10-10', [], letters), 1);
+  assert.ok(cards['word:kino:sens']);
+});
+
+test("seedWordCards : ne crée que la première marche d'un mot nouveau", () => {
+  const cards = {};
+  seedWordCards(cards, [word({ ru: 'привет', id: 'privet' })], '2026-10-10', [unit()]);
+  assert.deepEqual(Object.keys(cards), ['word:privet:sens']);
+});
+
+test('seedWordCards : retire une carte jamais vue au-dessus de la marche atteinte, garde les cartes travaillées', () => {
   const units = [unit()];
   const cards = {
-    'word:ya:ecoute': { reps: 3, due: '2026-10-10' },
-    'word:ya:lecture': { reps: 2, due: '2026-10-12' },
+    'word:privet:ecoute': { reps: 3, stability: 6, due: '2026-10-12' }, // déjà travaillée : gardée
+    'word:privet:fr-ru': { reps: 0, stability: 0.5, due: '2026-10-07' }, // jamais vue, marche 4 : retirée
   };
-  assert.equal(seedWordCards(cards, [word()], '2026-10-07', units), 1);
-  assert.equal(cards['word:ya:fr-ru'].reps, 0);
-  assert.equal(cards['word:ya:ecoute'].reps, 3);
+  seedWordCards(cards, [word({ ru: 'привет', id: 'privet' })], '2026-10-10', units);
+  assert.ok(cards['word:privet:ecoute']);
+  assert.ok(!cards['word:privet:fr-ru']);
+  assert.ok(cards['word:privet:sens']);
 });

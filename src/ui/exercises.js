@@ -2,6 +2,7 @@
 //
 // Construit les questions des exercices du §4.2 :
 //   1 (lettre → son) et 2 (son → lettre), pour une lettre et une facette donnée
+//   marches 1 et 2 de l'échelle d'un mot (QCM : sens, puis reconnaître à l'oreille)
 //   3 (lire à voix haute puis vérifier), pour un mot
 //   4 (où est l'accent ?), pour un mot
 //   7 (taper le mot entendu), pour un mot
@@ -252,5 +253,56 @@ export function buildDictationQuestion(sentence) {
     label: 'Écoute et écris la phrase',
     expected: sentence.ru,
     explanation: sentenceExplanation(sentence),
+  };
+}
+
+/**
+ * Des mots pour servir de mauvaises réponses à un QCM sur `word` : d'abord ceux de la même
+ * unité (même thème, donc pas éliminables d'un coup d'œil), puis les autres. Jamais un mot
+ * qui s'écrit pareil (замок / замок) ni qui a la même traduction : il serait juste aussi.
+ */
+function wordDistractors(word, allWords, count = 3) {
+  const candidates = allWords.filter(
+    (w) => w.reviewed?.ok === true && w.id !== word.id && w.ru !== word.ru && w.fr !== word.fr
+  );
+  const sameUnit = shuffle(candidates.filter((w) => w.unit === word.unit));
+  const others = shuffle(candidates.filter((w) => w.unit !== word.unit));
+  return [...sameUnit, ...others].slice(0, count);
+}
+
+/**
+ * Marche 1 de l'échelle d'un mot (core/seeding.js#wordLevels) : lire le mot russe, choisir
+ * sa traduction parmi 4. Le premier contact après la fiche de découverte est un QCM (§2.3).
+ * @param {object} word
+ * @param {object[]} allWords - tout le vocabulaire chargé, pour les mauvaises réponses
+ * @param {{showStress?: boolean}} [options] - accent affiché ou non (réglage, §2.7)
+ */
+export function buildMeaningQuestion(word, allWords, { showStress = true } = {}) {
+  const options = shuffle([word, ...wordDistractors(word, allWords)]);
+  return {
+    kind: 'sens',
+    prompt: showStress ? withStressMark(word.ru, word.stress) : word.ru,
+    promptClass: 'prompt-word',
+    label: 'Que veut dire ce mot ?',
+    correctId: word.id,
+    audioText: null,
+    explanation: `${word.ru} — ${word.fr}`,
+    choices: options.map((w) => ({ id: w.id, label: w.fr })),
+  };
+}
+
+/**
+ * Marche 2 : entendre le mot et le retrouver parmi 4 mots russes écrits (QCM). Fait le lien
+ * entre le son et l'écrit avant de demander de le produire (marche 4).
+ */
+export function buildRecognizeQuestion(word, allWords) {
+  const options = shuffle([word, ...wordDistractors(word, allWords)]);
+  return {
+    kind: 'reconnaitre',
+    audioText: word.ru,
+    label: 'Quel mot entends-tu ?',
+    correctId: word.id,
+    explanation: `${word.ru} — ${word.fr}`,
+    choices: options.map((w) => ({ id: w.id, label: w.ru, lang: 'ru' })),
   };
 }

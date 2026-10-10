@@ -105,8 +105,11 @@ async function boot() {
 function seedNewCards() {
   const { cards } = app.progress.state;
   const { words, pairs, sentences, units, wordsById } = app.content;
+  // Les mots attendent que leurs lettres soient acquises, et montent l'échelle marche par
+  // marche (core/seeding.js) : l'ordre des appels compte, les phrases et les paires
+  // dépendent des cartes de mots créées juste avant.
   const added =
-    seedWordCards(cards, words, today(), units) +
+    seedWordCards(cards, words, today(), units, app.content.letters) +
     seedPairCards(cards, pairs, wordsById, today(), units, words) +
     seedSentenceCards(cards, sentences, words, today(), units);
   if (added > 0) app.storage.save(app.progress.state);

@@ -978,3 +978,10 @@ h1 {
   font-weight: 600;
   text-align: center;
 }
+
+/* Marche 1 de l'échelle d'un mot : le mot russe en consigne (plus long qu'une lettre) */
+
+.prompt-letter.prompt-word {
+  font-size: 2.6rem;
+  overflow-wrap: anywhere;
+}
